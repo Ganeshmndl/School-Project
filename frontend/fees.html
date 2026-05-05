@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fees Payment | BeSchool</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <div class="menu-toggle" id="menu">☰</div>
+
+      <nav id="nav">
+        <a href="index.html">Home</a>
+        <a href="about.html">About Us</a>
+        <a href="classes.html">Classes</a>
+        <a href="fees.html" class="active">Fees</a>
+      </nav>
+
+      <a href="admissions.html" class="btn">Admissions</a>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" style="min-height: 45vh">
+      <div class="hero-text">
+        <h1>Fees Payment</h1>
+        <p>Pay school fees securely using the details below.</p>
+      </div>
+    </section>
+
+    <!-- FEES SECTION -->
+    <section class="why">
+      <div class="admission-box">
+        <!-- IMPORTANT ALERT -->
+        <div class="payment-alert">
+          ⚠️ <strong>Important:</strong> While making the payment, please
+          mention the
+          <strong>Student Name, Address, Class, and Roll Number</strong> in the
+          <strong>remarks / description</strong> field. After mentioning the
+          details, complete the payment.
+        </div>
+
+        <h2>Payment Details</h2>
+        <p>You can scan the QR code below to pay the school fees.</p>
+
+        <div class="divider"></div>
+
+        <!-- PAYMENT CARD -->
+        <div class="payment-card">
+          <img
+            src="photos/fees-qr.jpeg"
+            alt="Fees Payment QR Code"
+            loading="lazy"
+          />
+
+          <h4>eSewa</h4>
+          <p><strong>Name:</strong> Ram Bharosh Mandal</p>
+          <p><strong>Mobile:</strong> 9819859156</p>
+
+          <p class="payment-note">
+            Scan the QR code using eSewa or supported payment apps to complete
+            the payment.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUBMISSION FORM -->
+    <section class="why">
+      <div class="admission-box">
+        <h2>Submit Payment Receipt</h2>
+        <p>Fill your details and upload the payment receipt screenshot.</p>
+        <div id="fees-msg" style="margin-bottom: 12px"></div>
+        <form action="/fees/submit" method="POST" enctype="multipart/form-data">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Student Name</label>
+              <input name="student_name" placeholder="Full name" required />
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <input
+                name="address"
+                placeholder="Residential address"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Class</label>
+              <input name="class" placeholder="e.g., Class 7" required />
+            </div>
+            <div class="form-group">
+              <label>Roll Number</label>
+              <input name="roll" placeholder="Roll number" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Payment Receipt Screenshot</label>
+              <input type="file" name="receipt" accept="image/*" required />
+              <div class="input-hint">Max 2MB • JPG/PNG only</div>
+            </div>
+          </div>
+          <button class="action-btn yellow" type="submit">
+            Submit Receipt
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      menu.addEventListener("click", () => nav.classList.toggle("active"));
+      (function () {
+        const el = document.getElementById("fees-msg");
+        if (!el) return;
+        const p = new URLSearchParams(location.search);
+        const s = p.get("fees_status");
+        const e = p.get("fees_error");
+        if (s === "ok") {
+          el.className = "input-error";
+          el.style.background = "#e7f5ff";
+          el.style.borderColor = "#93c5fd";
+          el.style.color = "#0c4a6e";
+          el.textContent = "Receipt submitted successfully";
+        } else if (e) {
+          let msg =
+            e === "LIMIT_FILE_SIZE"
+              ? "Maximum file size is 2MB"
+              : e === "INVALID_FILE_TYPE"
+                ? "Only image files are allowed"
+                : e === "RECEIPT_REQUIRED"
+                  ? "Receipt screenshot is required"
+                  : "Please check the fields and try again";
+          el.className = "input-error";
+          el.textContent = msg;
+        }
+      })();
+    </script>
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-box footer-about">
+          <h3>BeSchool</h3>
+          <p>
+            A safe and joyful learning environment for young minds to grow with
+            confidence and values.
+          </p>
+        </div>
+        <div class="footer-row">
+          <div class="footer-box">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Classes</a></li>
+              <li><a href="#">Teachers</a></li>
+            </ul>
+          </div>
+          <div class="footer-box">
+            <h4>Contact</h4>
+            <p>📍 Your School Address</p>
+            <p>📞 +91 89057 11200</p>
+            <p>✉️ info@beschool.com</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 BeSchool. All rights reserved.</div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About Us | BeSchool</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <div class="menu-toggle" id="menu">☰</div>
+
+      <nav id="nav">
+        <a href="index.html">Home</a>
+        <a href="about.html" class="active">About Us</a>
+        <a href="classes.html">Classes</a>
+        <a href="fees.html">Fees</a>
+      </nav>
+
+      <a href="admissions.html" class="btn">Admissions</a>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" style="min-height: 45vh">
+      <div class="hero-text">
+        <h1>About Our School</h1>
+        <p>
+          Building strong foundations through quality education, discipline, and
+          values.
+        </p>
+      </div>
+    </section>
+
+    <!-- ABOUT CONTENT -->
+    <section class="why">
+      <div class="about-box">
+        <!-- SCHOOL HISTORY -->
+        <h2>School History</h2>
+        <p>
+          BeSchool Primary School was established with the vision of providing
+          quality education in a safe and nurturing environment. Over the years,
+          the school has grown into a trusted institution known for academic
+          excellence and holistic development.
+        </p>
+
+        <div class="divider"></div>
+
+        <!-- PRINCIPAL -->
+        <section class="about-section">
+          <div class="container">
+            <div class="text-col">
+              <h2 class="section-title">Message From The Principal</h2>
+              <span class="title-underline"></span>
+              <p>
+                At BeSchool, we are committed to providing meaningful, engaging,
+                and accessible learning for every child. We focus on academic
+                excellence, character building, and a safe, joyful environment
+                where students thrive.
+              </p>
+              <p>
+                Through modern pedagogy and caring mentorship, we inspire
+                curiosity and confidence while nurturing each learner’s unique
+                strengths. We partner closely with families to guide every
+                student toward their full potential.
+              </p>
+              <div class="byline">
+                <strong>Dr. Ganesh Mandal</strong><br />
+                <span class="designation">Principal, BeSchool</span><br />
+                <span class="qualification">M.Ed.</span>
+              </div>
+            </div>
+            <div class="image-col">
+              <img src="photos/image5.png" alt="Principal" />
+            </div>
+          </div>
+        </section>
+
+        <!-- FOUNDER -->
+        <section class="about-section alt reverse">
+          <div class="container">
+            <div class="image-col">
+              <img src="photos/image1.jpg" alt="Founder" />
+            </div>
+            <div class="text-col">
+              <h2 class="section-title">Message From The Founder</h2>
+              <span class="title-underline"></span>
+              <p>
+                Welcome to BeSchool. Our journey began with a simple vision: to
+                make quality education caring, accessible, and transformative.
+                With the support of dedicated teachers and families, we’ve built
+                a school anchored in values.
+              </p>
+              <p>
+                Thank you for considering BeSchool as a partner in your child’s
+                learning journey. We look forward to welcoming you to our
+                community of learners.
+              </p>
+              <div class="byline">
+                <strong>Mrs. Veena Devi</strong><br />
+                <span class="designation">Founder, BeSchool</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MANAGING DIRECTOR -->
+        <section class="about-section">
+          <div class="container">
+            <div class="text-col">
+              <h2 class="section-title">Message From The Managing Director</h2>
+              <span class="title-underline"></span>
+              <p>
+                On behalf of the BeSchool family, I extend a warm welcome to
+                you. Our pursuit of excellence is driven by a commitment to
+                academic rigour, character development, and innovation—so every
+                learner grows with confidence.
+              </p>
+              <p>
+                We continually invest in a dynamic learning environment, modern
+                teaching methods, and a student‑centric culture that promotes
+                inclusivity and values. Together, we prepare our students to
+                become compassionate, responsible leaders.
+              </p>
+              <p>
+                I invite you to visit our campus and experience the BeSchool
+                spirit—simple, enjoyable, and accessible to every child.
+              </p>
+              <div class="byline">
+                <strong>Dr. Sonu Kumar</strong><br />
+                <span class="designation">Managing Director, BeSchool</span>
+              </div>
+            </div>
+            <div class="image-col">
+              <img src="photos/image4.jpg" alt="Managing Director" />
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      menu.addEventListener("click", () => nav.classList.toggle("active"));
+    </script>
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-box footer-about">
+          <h3>BeSchool</h3>
+          <p>
+            A safe and joyful learning environment for young minds to grow with
+            confidence and values.
+          </p>
+        </div>
+        <div class="footer-row">
+          <div class="footer-box">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Classes</a></li>
+              <li><a href="#">Teachers</a></li>
+            </ul>
+          </div>
+          <div class="footer-box">
+            <h4>Contact</h4>
+            <p>📍 Your School Address</p>
+            <p>📞 +91 89057 11200</p>
+            <p>✉️ info@beschool.com</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 BeSchool. All rights reserved.</div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Sensitive files (Environmental variables)
+.env
+backend/.env
+
+# Databases
+*.db
+backend/*.db
+admissions.db
+backend/admissions.db
+
+# User uploads (heavy files/dynamic content)
+backend/uploads/
+uploads/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend/npm-debug.log*
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj

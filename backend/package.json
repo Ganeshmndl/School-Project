@@ -1,0 +1,20 @@
+{
+  "name": "beschool-server",
+  "version": "1.0.0",
+  "description": "Backend server for BeSchool to store admission form data",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.4",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "express-session": "^1.19.0",
+    "express-validator": "^7.3.1",
+    "multer": "^2.0.2",
+    "sqlite3": "^5.1.6"
+  }
+}

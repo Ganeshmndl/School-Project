@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login | BeSchool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .login-box {
+        max-width: 520px;
+        margin: 40px auto;
+        padding: 30px 28px;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      }
+      .error {
+        color: #dc2626;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <nav id="nav">
+        <a href="index.html">Home</a>
+        <a href="about.html">About us</a>
+        <a href="teachers.html">Teachers</a>
+        <a href="fees.html">Fees</a>
+      </nav>
+      <a href="admissions.html" class="btn">Admissions</a>
+    </header>
+
+    <section class="why">
+      <h2>Admin Login</h2>
+      <div class="login-box">
+        <form method="POST" action="/admin-login" id="admin-login-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Enter admin username"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter password"
+              required
+            />
+          </div>
+          <button type="submit" class="learn admission-btn">Login</button>
+          <div class="error" id="login-error" style="display: none">
+            Invalid credentials or too many attempts.
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      if (menu && nav) {
+        menu.addEventListener("click", () => nav.classList.toggle("active"));
+      }
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("error")) {
+        const el = document.getElementById("login-error");
+        if (el) el.style.display = "block";
+      }
+    </script>
+  </body>
+</html>

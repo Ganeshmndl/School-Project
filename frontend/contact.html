@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us | BeSchool</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Sun–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <div class="menu-toggle" id="menu">☰</div>
+
+      <nav id="nav">
+        <a href="index.html">Home</a>
+        <a href="about.html">About Us</a>
+        <a href="classes.html">Classes</a>
+        <a href="fees.html">Fees</a>
+        <a href="contact.html" class="active">Contact us</a>
+      </nav>
+
+      <a href="admissions.html" class="btn">Admissions</a>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" style="min-height: 45vh">
+      <div class="hero-text">
+        <h1>Contact Us</h1>
+        <p>
+          We are here to help you. Feel free to contact us for any queries or
+          information.
+        </p>
+      </div>
+    </section>
+
+    <!-- CONTACT DETAILS -->
+    <section class="why">
+      <div class="Contact-box">
+        <h2>Get in Touch</h2>
+        <p>
+          Parents and guardians can reach us using the contact details below.
+        </p>
+
+        <div class="divider"></div>
+
+        <div class="contact-grid">
+          <div class="contact-card">
+            <h4>📍 Address</h4>
+            <p>
+              BeSchool Primary School<br />
+              Your School Address Line 1<br />
+              City, State, Country
+            </p>
+          </div>
+
+          <div class="contact-card">
+            <h4>📞 Phone</h4>
+            <p>+91 89057 11200</p>
+            <p>+91 98XXXXXXXX</p>
+          </div>
+
+          <div class="contact-card">
+            <h4>✉️ Email</h4>
+            <p>info@beschool.com</p>
+            <p>contact@beschool.com</p>
+          </div>
+
+          <div class="contact-card">
+            <h4>🕒 School Hours</h4>
+            <p>Monday – Friday</p>
+            <p>9:00 AM – 3:30 PM</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      menu.addEventListener("click", () => nav.classList.toggle("active"));
+    </script>
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-box footer-about">
+          <h3>BeSchool</h3>
+          <p>
+            A safe and joyful learning environment for young minds to grow with
+            confidence and values.
+          </p>
+        </div>
+        <div class="footer-row">
+          <div class="footer-box">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Classes</a></li>
+              <li><a href="#">Teachers</a></li>
+            </ul>
+          </div>
+          <div class="footer-box">
+            <h4>Contact</h4>
+            <p>📍 Your School Address</p>
+            <p>📞 +91 89057 11200</p>
+            <p>✉️ info@beschool.com</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 BeSchool. All rights reserved.</div>
+    </footer>
+  </body>
+</html>

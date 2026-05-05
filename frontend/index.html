@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BeSchool - Primary School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="top-bar">
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Sun–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <div class="menu-toggle" id="menu">☰</div>
+      <nav id="nav">
+        <a href="index.html" class="active">Home</a>
+        <a href="about.html">About us</a>
+        <a href="classes.html">Classes</a>
+        <a href="fees.html">Fees</a>
+      </nav>
+      <a href="admissions.html" class="btn">Admissions</a>
+    </header>
+
+    <section class="hero home-hero">
+      <div class="hero-text">
+        <small>WELCOME ON OUR SITE</small>
+        <h1>Primary School</h1>
+        <p>
+          We provide a joyful, safe, and engaging learning environment where
+          children grow with confidence.
+        </p>
+        <div class="cta-group">
+          <a href="about.html" class="learn">Learn more</a>
+          <a href="admissions.html" class="secondary">Admissions Open</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="cards">
+      <div
+        class="card red"
+        onclick="window.location.href = 'teachers.html'"
+        style="cursor: pointer"
+      >
+        <div class="card-left">
+          <span class="icon">👩‍🏫</span>
+          <h3>Our Teachers</h3>
+        </div>
+        <span>➜</span>
+      </div>
+      <div
+        class="card yellow"
+        onclick="window.location.href = 'fees.html'"
+        style="cursor: pointer"
+      >
+        <div class="card-left">
+          <span class="icon">🎒</span>
+          <h3>Fee Payment</h3>
+        </div>
+        <span>➜</span>
+      </div>
+      <div
+        class="card white"
+        onclick="window.location.href = 'contact.html'"
+        style="cursor: pointer"
+      >
+        <div class="card-left">
+          <span class="icon">📞</span>
+          <h3>Contact Us</h3>
+        </div>
+        <span>➜</span>
+      </div>
+    </section>
+
+    <section class="why">
+      <h2>Why Choose Our School?</h2>
+      <p>
+        We focus on holistic education that balances academics, creativity, and
+        values in a safe environment.
+      </p>
+      <div class="why-grid">
+        <div class="why-box">
+          <span>🏫</span>
+          <h4>Safe Campus</h4>
+          <p>Secure and child-friendly infrastructure.</p>
+        </div>
+        <div class="why-box">
+          <span>📚</span>
+          <h4>Quality Education</h4>
+          <p>Experienced teachers and modern curriculum.</p>
+        </div>
+        <div class="why-box">
+          <span>🎨</span>
+          <h4>All‑Round Growth</h4>
+          <p>Sports, arts, and extracurricular activities.</p>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      menu.addEventListener("click", () => nav.classList.toggle("active"));
+    </script>
+    <footer class="footer">
+      <div class="footer-container">
+        <!-- School Info -->
+        <div class="footer-box footer-about">
+          <h3>BeSchool</h3>
+          <p>
+            A safe and joyful learning environment for young minds to grow with
+            confidence and values.
+          </p>
+        </div>
+
+        <!-- Links + Contact Row -->
+        <div class="footer-row">
+          <div class="footer-box">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Classes</a></li>
+              <li><a href="#">Teachers</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-box">
+            <h4>Contact</h4>
+            <p>📍 Your School Address</p>
+            <p>📞 +91 89057 11200</p>
+            <p>✉️ info@beschool.com</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">© 2026 BeSchool. All rights reserved.</div>
+    </footer>
+  </body>
+</html>

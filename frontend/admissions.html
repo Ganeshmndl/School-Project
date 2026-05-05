@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admissions | BeSchool</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <div class="menu-toggle" id="menu">☰</div>
+
+      <nav id="nav">
+        <a href="index.html">Home</a>
+        <a href="about.html">About us</a>
+        <a href="classes.html">Classes</a>
+        <a href="fees.html">Fees</a>
+        <a href="admissions.html" class="active">Admissions</a>
+      </nav>
+
+      <a href="admissions.html" class="btn">Admissions</a>
+    </header>
+
+    <!-- PAGE HERO -->
+    <section class="hero" style="min-height: 50vh">
+      <div class="hero-text">
+        <h1>Admissions</h1>
+        <p>
+          Join BeSchool and give your child a joyful, safe, and quality learning
+          experience.
+        </p>
+      </div>
+    </section>
+
+    <!-- ADMISSION CONTENT -->
+    <section class="why">
+      <div class="admission-box">
+        <h2>Admission Process</h2>
+        <p>
+          Our admission process is simple and transparent. Please follow the
+          steps below.
+        </p>
+        <div class="divider"></div>
+
+        <ul class="admission-steps">
+          <li>
+            <strong>Step 1:</strong> Visit the school or contact us for
+            admission enquiry.
+          </li>
+          <li>
+            <strong>Step 2:</strong> Fill the admission form with required
+            student and parent details.
+          </li>
+          <li>
+            <strong>Step 3:</strong> Submit necessary documents for
+            verification.
+          </li>
+          <li>
+            <strong>Step 4:</strong> After verification, admission confirmation
+            will be provided by the school.
+          </li>
+        </ul>
+
+        <a href="#admission-section" class="learn admission-btn">
+          Fill the Admission Form
+        </a>
+      </div>
+    </section>
+
+    <section class="why" id="admission-section">
+      <div class="admission-box">
+        <h2>School Admission Form</h2>
+        <p>Please fill in the student details carefully.</p>
+
+        <div class="divider"></div>
+
+        <form class="admission-form" id="admission-form">
+          <!-- Student Name -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Student’s First Name *</label>
+              <input
+                type="text"
+                placeholder="First Name"
+                name="first_name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input
+                type="text"
+                placeholder="Last Name"
+                name="last_name"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Class -->
+          <div class="form-group">
+            <label>Class you want to apply for *</label>
+            <input
+              type="text"
+              placeholder="For example: Class 1"
+              name="class_applied"
+              required
+            />
+          </div>
+
+          <!-- DOB -->
+          <div class="form-group">
+            <label>Student’s Date of Birth *</label>
+            <input type="date" name="dob" required />
+          </div>
+
+          <!-- Parent Name -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parent / Guardian First Name *</label>
+              <input
+                type="text"
+                placeholder="First Name"
+                name="parent_first_name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input
+                type="text"
+                placeholder="Last Name"
+                name="parent_last_name"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="form-group">
+            <label>Current Address</label>
+            <input type="text" placeholder="Street Address" name="address" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <input type="text" placeholder="City" name="city" />
+            </div>
+            <div class="form-group">
+              <input type="text" placeholder="State / Region" name="state" />
+            </div>
+          </div>
+
+          <!-- Contact -->
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" placeholder="##########" name="phone" required />
+          </div>
+
+          <div class="form-group">
+            <label>Email *</label>
+            <input
+              type="email"
+              placeholder="example@email.com"
+              name="email"
+              required
+            />
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="learn admission-btn">
+            Submit Admission Form
+          </button>
+        </form>
+        <div id="form-status" style="margin-top: 12px; font-size: 14px"></div>
+      </div>
+    </section>
+
+    <!-- FOOTER (reuse your existing footer here) -->
+
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      menu.addEventListener("click", () => nav.classList.toggle("active"));
+      const form = document.getElementById("admission-form");
+      const statusEl = document.getElementById("form-status");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        statusEl.textContent = "Submitting...";
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        try {
+          const res = await fetch("/api/admissions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          const json = await res.json();
+          if (res.ok && json.ok) {
+            statusEl.style.color = "#16a34a";
+            statusEl.textContent = "Form submitted successfully. Thank you!";
+            form.reset();
+          } else {
+            statusEl.style.color = "#dc2626";
+            statusEl.textContent =
+              "Submission failed. Please check required fields.";
+          }
+        } catch (err) {
+          statusEl.style.color = "#dc2626";
+          statusEl.textContent = "Network error. Please try again.";
+        }
+      });
+    </script>
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-box footer-about">
+          <h3>BeSchool</h3>
+          <p>
+            A safe and joyful learning environment for young minds to grow with
+            confidence and values.
+          </p>
+        </div>
+        <div class="footer-row">
+          <div class="footer-box">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Classes</a></li>
+              <li><a href="#">Teachers</a></li>
+            </ul>
+          </div>
+          <div class="footer-box">
+            <h4>Contact</h4>
+            <p>📍 Your School Address</p>
+            <p>📞 +91 89057 11200</p>
+            <p>✉️ info@beschool.com</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 BeSchool. All rights reserved.</div>
+    </footer>
+  </body>
+</html>
