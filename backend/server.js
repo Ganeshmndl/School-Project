@@ -432,6 +432,30 @@ app.get("/admin-login", (req, res) => {
   return res.sendFile(path.join(STATIC_DIR, "admin-login.html"));
 });
 
+// Helper to generate admin navbar
+function getAdminNavbar(activePage, isAdmin) {
+  return `
+    <header>
+      <div class="logo"><span>B</span>eSchool</div>
+      <div class="menu-toggle" id="menu">☰</div>
+      <nav id="nav">
+        <a href="/index.html">Home</a>
+        <a href="/about.html">About us</a>
+        <a class="${activePage === "classes" ? "active" : ""}" href="/classes">Classes</a>
+        <a class="${activePage === "teachers" ? "active" : ""}" href="/teachers">Teachers</a>
+        <a class="${activePage === "fees" ? "active" : ""}" href="${isAdmin ? "/fees" : "/fees.html"}">Fees</a>
+        ${isAdmin ? `<a class="${activePage === "dashboard" ? "active" : ""}" href="/admin/dashboard">Dashboard</a>` : ""}
+      </nav>
+      <a href="/admissions.html" class="btn">Admissions</a>
+    </header>
+    <script>
+      const menu = document.getElementById("menu");
+      const nav = document.getElementById("nav");
+      if (menu && nav) menu.addEventListener("click", () => nav.classList.toggle("active"));
+    </script>
+  `;
+}
+
 // Login handler
 app.post(
   "/admin-login",
@@ -568,16 +592,7 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
       <div>📞 +91 89057 11200</div>
       <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
     </div>
-    <header>
-      <div class="logo"><span>B</span>eSchool</div>
-      <nav id="nav">
-        <a href="/index.html">Home</a>
-        <a href="/about.html">About us</a>
-        <a href="/teachers">Teachers</a>
-        <a href="/fees">Fees</a>
-      </nav>
-      <a href="/admissions.html" class="btn">Admissions</a>
-    </header>
+    ${getAdminNavbar("dashboard", true)}
     <section class="why">
       <div class="admin-header">
         <h2>Admin Dashboard</h2>
@@ -637,11 +652,6 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
     </section>
 
     <script>
-      // Mobile nav toggle (existing pattern)
-      const menu = document.getElementById("menu");
-      const nav = document.getElementById("nav");
-      if (menu && nav) menu.addEventListener("click", () => nav.classList.toggle("active"));
-
       // Search filtering
       const searchInput = document.getElementById('admin-search');
       const tbody = document.getElementById('admin-tbody');
@@ -805,16 +815,7 @@ app.get("/teachers", (req, res) => {
       <div>📞 +91 89057 11200</div>
       <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
     </div>
-    <header>
-      <div class="logo"><span>B</span>eSchool</div>
-      <nav id="nav">
-        <a href="/index.html">Home</a>
-        <a href="/about.html">About us</a>
-        <a class="active" href="/teachers">Teachers</a>
-        <a href="${isAdmin ? "/fees" : "/fees.html"}">Fees</a>
-      </nav>
-      <a href="/admissions.html" class="btn">Admissions</a>
-    </header>
+    ${getAdminNavbar("teachers", isAdmin)}
     <section class="why">
       <h2>Our Teachers</h2>
       <p>Meet the faculty guiding our students with dedication and expertise.</p>
@@ -824,10 +825,6 @@ app.get("/teachers", (req, res) => {
         ${cards}
       </div>
     </section>
-    <script>
-      const menu = document.getElementById("menu");
-      const nav = document.getElementById("nav");
-      if (menu && nav) menu.addEventListener("click", () => nav.classList.toggle("active"));
       document.querySelectorAll('.teacher-del').forEach(f => {
         f.addEventListener('submit', function(e){
           if(!confirm('Delete this teacher?')) e.preventDefault();
@@ -1050,16 +1047,7 @@ app.get("/fees", requireAdmin, (req, res) => {
       <div>📞 +91 89057 11200</div>
       <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
     </div>
-    <header>
-      <div class="logo"><span>B</span>eSchool</div>
-      <nav id="nav">
-        <a href="/index.html">Home</a>
-        <a href="/about.html">About us</a>
-        <a href="/teachers">Teachers</a>
-        <a class="active" href="/fees">Fees</a>
-      </nav>
-      <a href="/admissions.html" class="btn">Admissions</a>
-    </header>
+    ${getAdminNavbar("fees", true)}
     <section class="why">
       <div class="admin-header">
         <h2>Fee Submissions</h2>
@@ -1106,8 +1094,10 @@ app.post("/admin/teachers/delete/:id", requireAdmin, (req, res) => {
 
 // Logout (protected)
 app.get("/admin/logout", requireAdmin, (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/admin-login");
+  req.session.destroy((err) => {
+    if (err) console.error("Logout error:", err);
+    res.clearCookie("connect.sid"); // Clear session cookie
+    res.redirect("/index.html"); // Redirect to Home
   });
 });
 
@@ -1282,21 +1272,10 @@ app.get("/classes", async (req, res) => {
 </head>
 <body>
   <div class="top-bar">
-    <div>📞 +91 89057 11200</div>
-    <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
-  </div>
-  <header>
-    <div class="logo"><span>B</span>eSchool</div>
-    <div class="menu-toggle" id="menu">☰</div>
-    <nav id="nav">
-      <a href="/index.html">Home</a>
-      <a href="/about.html">About Us</a>
-      <a class="active" href="/classes">Classes</a>
-      <a href="/teachers">Teachers</a>
-      <a href="${isAdmin ? "/fees" : "/fees.html"}">Fees</a>
-    </nav>
-    <a href="/admissions.html" class="btn">Admissions</a>
-  </header>
+      <div>📞 +91 89057 11200</div>
+      <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
+    </div>
+    ${getAdminNavbar("classes", isAdmin)}
 
   <section class="hero" style="min-height: 40vh;">
     <div class="hero-text">
@@ -1353,10 +1332,6 @@ app.get("/classes", async (req, res) => {
   </footer>
 
   <script>
-    const menu = document.getElementById("menu");
-    const nav = document.getElementById("nav");
-    if(menu && nav) menu.addEventListener("click", () => nav.classList.toggle("active"));
-
     // Smooth scroll for sticky nav
     document.querySelectorAll('.class-nav-link').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
