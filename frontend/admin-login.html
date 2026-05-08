@@ -79,10 +79,22 @@
       if (menu && nav) {
         menu.addEventListener("click", () => nav.classList.toggle("active"));
       }
+
       const params = new URLSearchParams(window.location.search);
+      const errorEl = document.getElementById("login-error");
+
       if (params.has("error")) {
-        const el = document.getElementById("login-error");
-        if (el) el.style.display = "block";
+        const errorCode = params.get("error");
+        errorEl.style.display = "block";
+
+        if (errorCode === "blocked") {
+          errorEl.textContent = "Too many failed attempts. Please try again later.";
+        } else if (errorCode === "wrong") {
+          const attempt = params.get("attempt") || "1";
+          errorEl.textContent = `Wrong username or password. Attempt ${attempt} of 5.`;
+        } else {
+          errorEl.textContent = "Invalid credentials or too many attempts.";
+        }
       }
     </script>
   </body>

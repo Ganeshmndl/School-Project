@@ -329,20 +329,66 @@ nav a.active::after {
 .classes-container {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 60px; /* Increased gap between class sections */
   margin-top: 30px;
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
+  scroll-behavior: smooth;
+}
+
+/* Sticky Class Navigation */
+.sticky-class-nav {
+  position: sticky;
+  top: 70px; /* Adjusted based on header height */
+  background: #ffffff;
+  z-index: 900;
+  padding: 15px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-bottom: 2px solid #f0f0f0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sticky-class-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.class-nav-link {
+  text-decoration: none;
+  color: #1d3557;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.class-nav-link.active {
+  background: #e63946;
+  color: #ffffff;
+  border-color: #e63946;
+}
+
+.class-nav-link:hover:not(.active) {
+  background: #fdf2f2;
+  color: #e63946;
+  border-color: #e63946;
 }
 
 .class-section {
   background: #ffffff;
-  border-radius: 20px;
-  padding: 50px 30px;
+  border-radius: 24px; /* More rounded */
+  padding: 60px 40px; /* More padding */
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
   transition: transform 0.3s ease;
   border: 1px solid #f0f0f0;
+  scroll-margin-top: 140px; /* offset for sticky header and nav */
 }
 
 .centered {
@@ -352,41 +398,43 @@ nav a.active::after {
 }
 
 .class-header.centered {
-  margin-bottom: 30px;
+  margin-bottom: 40px; /* Spacing below header */
 }
 
 .class-title-wrap h2 {
   color: #1d3557;
-  font-size: 32px;
-  margin-bottom: 8px;
+  font-size: 40px; /* Larger title */
+  margin-bottom: 16px; /* Spacing below Title: Title -> Age/Session = 16px */
   font-weight: 700;
 }
 
 .age-session {
   color: #e63946;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  margin-bottom: 24px; /* Spacing below Age/Session: Age/Session -> Activities heading = 24px */
+  display: block;
 }
 
 .section-subtitle {
-  font-size: 22px;
-  margin-bottom: 5px;
+  font-size: 24px;
+  margin-bottom: 12px; /* Spacing below Activities heading: Activities heading -> Activity chips = 12px */
   color: #1d3557;
   font-weight: 600;
 }
 
 .title-underline.mini {
-  width: 40px;
-  height: 3px;
+  width: 50px;
+  height: 4px;
   background: #ffb703; /* yellow underline */
-  margin: 0 auto 20px auto;
+  margin: 0 auto 30px auto;
   border-radius: 999px;
 }
 
 .activities-area {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
 }
 
 .activities-grid.centered {
@@ -399,25 +447,26 @@ nav a.active::after {
 .activity-badge {
   background: #ffffff;
   color: #333;
-  padding: 10px 18px;
+  padding: 12px 22px;
   border-radius: 50px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   border: 2px solid #ffb703; /* yellow border */
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(255, 183, 3, 0.1);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 183, 3, 0.1);
 }
 
 .activity-badge:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(255, 183, 3, 0.2);
+  background: #fffcf5;
 }
 
 .books-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 30px;
-  margin-top: 20px;
+  margin-top: 30px;
 }
 
 .book-card {
@@ -425,45 +474,62 @@ nav a.active::after {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid #f5f5f5;
   display: flex;
   flex-direction: column;
+  height: 100%; /* Ensure equal height */
 }
 
-.book-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+/* Premium Hover Effect (Desktop only) */
+@media (min-width: 1025px) {
+  .book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  }
 }
 
 .book-card img {
   width: 100%;
-  height: 220px;
+  aspect-ratio: 4 / 5; /* Uniform aspect ratio */
   object-fit: cover;
+  object-position: center;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .book-info {
-  padding: 20px;
+  padding: 24px 20px;
   text-align: center;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .book-info h4 {
-  font-size: 17px;
-  margin-bottom: 8px;
+  font-size: 18px;
+  margin-bottom: 10px;
   color: #1d3557;
-  font-weight: 600;
+  font-weight: 700;
+  height: 50px; /* Fixed height for title area */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .book-info p {
   font-size: 14px;
   color: #666;
-  margin-bottom: 15px;
+  margin-bottom: 0;
+  height: 40px; /* Fixed height for publisher area */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .book-actions {
-  margin-top: auto;
+  margin-top: 15px;
 }
 
 /* Admin Specific */
@@ -496,7 +562,7 @@ nav a.active::after {
   border: 2px dashed #ffb703;
   background: #fffcf5;
   justify-content: center;
-  min-height: 300px;
+  min-height: 400px; /* Adjusted for taller cards */
 }
 
 .add-book-summary {
@@ -514,19 +580,34 @@ nav a.active::after {
 }
 
 @media (max-width: 900px) {
+  .sticky-class-nav {
+    top: 60px;
+    justify-content: flex-start;
+    padding: 12px 18px;
+  }
+  
+  .class-nav-link {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+
   .books-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+  }
+  
+  .activities-grid.centered {
+    gap: 10px; /* gap: 10px on mobile */
   }
 }
 
 @media (max-width: 600px) {
   .class-section {
-    padding: 35px 20px;
+    padding: 40px 20px;
   }
 
   .class-title-wrap h2 {
-    font-size: 26px;
+    font-size: 28px;
   }
 
   .books-grid {
@@ -534,8 +615,18 @@ nav a.active::after {
     gap: 15px;
   }
 
-  .book-card img {
-    height: 180px;
+  .book-info {
+    padding: 16px 12px;
+  }
+  
+  .book-info h4 {
+    font-size: 15px;
+    height: 40px;
+  }
+  
+  .book-info p {
+    font-size: 13px;
+    height: 34px;
   }
 }
 

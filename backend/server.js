@@ -140,47 +140,43 @@ db.serialize(() => {
     )`,
   );
   db.get("SELECT COUNT(*) AS c FROM teachers", [], (err, row) => {
-    if (err) return;
-    if (!row || !row.c) {
-      const seeds = [
-        {
-          name: "Ms. Anjali Sharma",
-          qualification: "M.A., B.Ed",
-          subject: "Subject: English",
-          photo: "photos/image1.jpg",
-        },
-        {
-          name: "Mr. Ravi Kumar",
-          qualification: "M.Sc., B.Ed",
-          subject: "Subject: Mathematics",
-          photo: "photos/image2.jpg",
-        },
-        {
-          name: "Ms. Neha Verma",
-          qualification: "B.Sc., D.El.Ed",
-          subject: "Subject: Science",
-          photo: "photos/image4.jpg",
-        },
-        {
-          name: "Mr. Suresh Patel",
-          qualification: "M.A., B.Ed",
-          subject: "Subject: Social Studies",
-          photo: "photos/image3.JPG",
-        },
-          photo: "photos/image1.jpg",
-      const stmt = db.prepare(
-        `INSERT INTO teachers (name, qualification, subject, photo) VALUES (?, ?, ?, ?)`,
-      );
-      seeds.forEach((t) =>
-        stmt.run(t.name, t.qualification, t.subject, t.photo),
-      );
-          name: "Mr. Ravi Kumar",
-          qualification: "M.Sc., B.Ed",
-          subject: "Subject: Mathematics",
-        },
+    if (err || (row && row.c > 0)) return;
+    const seeds = [
+      {
+        name: "Ms. Anjali Sharma",
+        qualification: "M.A., B.Ed",
+        subject: "Subject: English",
+        photo: "photos/image1.jpg",
+      },
+      {
+        name: "Mr. Ravi Kumar",
+        qualification: "M.Sc., B.Ed",
+        subject: "Subject: Mathematics",
+        photo: "photos/image2.jpg",
+      },
+      {
+        name: "Ms. Neha Verma",
+        qualification: "B.Sc., D.El.Ed",
+        subject: "Subject: Science",
+        photo: "photos/image4.jpg",
+      },
+      {
+        name: "Mr. Suresh Patel",
+        qualification: "M.A., B.Ed",
+        subject: "Subject: Social Studies",
+        photo: "photos/image3.JPG",
+      },
+    ];
+    const stmt = db.prepare(
+      `INSERT INTO teachers (name, qualification, subject, photo) VALUES (?, ?, ?, ?)`,
+    );
+    seeds.forEach((t) => stmt.run(t.name, t.qualification, t.subject, t.photo));
+    stmt.finalize();
+  });
+
+  db.get("SELECT COUNT(*) AS c FROM classes", [], (err, row) => {
     if (err || (row && row.c > 0)) return;
     const now = new Date().toISOString();
-
     const demoClasses = [
       {
         name: "Nursery",
@@ -188,8 +184,7 @@ db.serialize(() => {
         session: "2026–2027",
         activities: ["Rhymes", "Drawing", "Storytelling", "Clay Modeling"],
         books: [
-          photo: "photos/image4.jpg",
-        },
+          { name: "First Coloring", pub: "Color Joy", img: "Book2.jpeg" },
           { name: "Early Rhymes", pub: "Song Birds", img: "books3.jpg" },
         ],
       },
@@ -199,8 +194,7 @@ db.serialize(() => {
         session: "2026–2027",
         activities: ["Basic Writing", "Number Fun", "Music", "Coloring"],
         books: [
-          subject: "Subject: Social Studies",
-          photo: "photos/image3.JPG",
+          { name: "Number Magic", pub: "Math World", img: "book4.jpg" },
           { name: "Art & Craft", pub: "Creative Minds", img: "Book2.jpeg" },
         ],
       },
@@ -210,9 +204,8 @@ db.serialize(() => {
         session: "2026–2027",
         activities: ["Reading", "Simple Addition", "Drama", "Outdoor Play"],
         books: [
-        `INSERT INTO teachers (name, qualification, subject, photo) VALUES (?, ?, ?, ?)`,
-      );
           { name: "My World", pub: "Science Kids", img: "Book1.jpg" },
+          { name: "Reader's Choice", pub: "Story Hub", img: "books3.jpg" },
         ],
       },
     ];
@@ -223,47 +216,39 @@ db.serialize(() => {
           "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?, ?, ?, ?)",
           [c.name, c.age, c.session, now],
           function (err) {
-            if (err) {
-              console.error("Error inserting class:", err);
-              return;
-            }
-  db.get("SELECT COUNT(*) AS c FROM classes", [], (err, row) => {
-            console.log(`Seeding class ${c.name} with ID ${cid}`);
-
+            if (err) return console.error("Error inserting class:", err);
+            const cid = this.lastID;
             c.activities.forEach((a) => {
               db.run(
                 "INSERT INTO class_activities (class_id, activity_name) VALUES (?, ?)",
                 [cid, a],
               );
             });
-
             c.books.forEach((b) => {
               const imgPath = `photos/class-books/${b.img}`;
               db.run(
                 "INSERT INTO class_books (class_id, book_name, publisher, image_path) VALUES (?, ?, ?, ?)",
                 [cid, b.name, b.pub, imgPath],
-                (err) => {
-                  if (err) console.error("Error inserting book:", err);
-                },
               );
             });
           },
         );
-          name: "Nursery",
+      });
     });
-          session: "2026–2027",
-          activities: ["Rhymes", "Drawing", "Storytelling", "Clay Modeling"],
-          books: [
+  });
+});
+
 // ===== Multer config for teacher profile photos =====
-            { name: "First Coloring", pub: "Color Joy", img: "Book2.jpeg" },
-            { name: "Early Rhymes", pub: "Song Birds", img: "books3.jpg" },
-          ],
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname || "") || "";
     cb(null, "teacher-" + unique + ext);
-          name: "LKG",
-          age: "4–5 Years",
-          session: "2026–2027",
+  },
+});
+
+const fileFilter = (req, file, cb) => {
   if (
     file &&
     typeof file.mimetype === "string" &&
@@ -275,28 +260,30 @@ db.serialize(() => {
     err.code = "INVALID_FILE_TYPE";
     cb(err);
   }
-            { name: "Number Magic", pub: "Math World", img: "book4.jpg" },
+};
+
 const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
 });
-            { name: "Art & Craft", pub: "Creative Minds", img: "Book2.jpeg" },
+
 // Multer for class book images
-          ],
-        },
-        {
-          name: "UKG",
+const bookStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, CLASS_BOOKS_DIR),
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname || "") || "";
     cb(null, "book-" + unique + ext);
-          session: "2026–2027",
-          activities: ["Reading", "Simple Addition", "Drama", "Outdoor Play"],
+  },
+});
+
 const uploadBook = multer({
   storage: bookStorage,
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
 });
-            { name: "Reader's Choice", pub: "Story Hub", img: "books3.jpg" },
+
 // Handle Multer errors centrally for routes that use upload.single("photo")
 function handleUploadError(err, req, res, next) {
   if (err) {
@@ -308,10 +295,10 @@ function handleUploadError(err, req, res, next) {
           : "UPLOAD";
     return res.redirect(`/teachers?upload_error=${code}`);
   }
-        },
-      ];
+  next();
+}
 
-      db.serialize(() => {
+function handleReceiptError(err, req, res, next) {
   if (err) {
     const code =
       err.code === "LIMIT_FILE_SIZE"
@@ -321,9 +308,9 @@ function handleUploadError(err, req, res, next) {
           : "UPLOAD";
     return res.redirect(`/fees.html?fees_error=${code}`);
   }
-          db.run(
-            "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?, ?, ?, ?)",
-            [c.name, c.age, c.session, now],
+  next();
+}
+
 function handleBookError(err, req, res, next) {
   if (err) {
     const code =
@@ -451,10 +438,21 @@ app.post(
   maybeLoginLimiter,
   [body("username").trim().notEmpty(), body("password").notEmpty()],
   async (req, res) => {
+    // Initialize attempts if not set
+    if (typeof req.session.loginAttempts !== "number") {
+      req.session.loginAttempts = 0;
+    }
+
+    // If already blocked (>= 5 attempts)
+    if (req.session.loginAttempts >= 5) {
+      return res.redirect("/admin-login?error=blocked");
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.redirect("/admin-login?error=1");
     }
+
     try {
       const { username, password } = req.body;
       const envUser = (process.env.ADMIN_USER || "").trim();
@@ -467,18 +465,30 @@ app.post(
       const recvName = typeof username === "string" ? username.trim() : "";
       const envName = envUser.trim();
       const nameMatches = recvName === envName;
-      if (!nameMatches) {
-        return res.redirect("/admin-login?error=1");
-      }
 
-      const ok = await bcrypt.compare(password, envHash);
+      const checkPassword = async () => {
+        if (!nameMatches) return false;
+        return await bcrypt.compare(password, envHash);
+      };
+
+      const ok = await checkPassword();
+
       if (!ok) {
-        return res.redirect("/admin-login?error=1");
+        req.session.loginAttempts++;
+        if (req.session.loginAttempts >= 5) {
+          return res.redirect("/admin-login?error=blocked");
+        }
+        return res.redirect(
+          `/admin-login?error=wrong&attempt=${req.session.loginAttempts}`,
+        );
       }
 
+      // Success
       req.session.admin = true;
+      req.session.loginAttempts = 0; // Reset on success
       return res.redirect("/admin/dashboard");
     } catch (e) {
+      console.error("Login error:", e);
       return res.redirect("/admin-login?error=1");
     }
   },
@@ -551,7 +561,7 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style.css?v=1.2" />
   </head>
   <body>
     <div class="top-bar">
@@ -788,7 +798,7 @@ app.get("/teachers", (req, res) => {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style.css?v=1.2" />
   </head>
   <body>
     <div class="top-bar">
@@ -1033,7 +1043,7 @@ app.get("/fees", requireAdmin, (req, res) => {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style.css?v=1.2" />
   </head>
   <body>
     <div class="top-bar">
@@ -1102,20 +1112,29 @@ app.get("/admin/logout", requireAdmin, (req, res) => {
 });
 
 // ===== Classes (Dynamic) =====
-});
-
-// Multer Config
+app.get("/classes", async (req, res) => {
+  const isAdmin = !!(req.session && req.session.admin === true);
+  const error = req.query.error || "";
 
   const all = (sql, p = []) =>
     new Promise((resolve, reject) =>
       db.all(sql, p, (err, rows) => (err ? reject(err) : resolve(rows))),
     );
 
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+  try {
+    const [classes, activities, books] = await Promise.all([
+      all("SELECT * FROM classes ORDER BY id ASC"),
+      all("SELECT * FROM class_activities"),
+      all("SELECT * FROM class_books"),
+    ]);
+
+    const navLinks = classes
+      .map(
+        (c) =>
+          `<a href="#class-${c.id}" class="class-nav-link">${esc(c.class_name)}</a>`,
+      )
+      .join("");
+
     const sections = classes
       .map((c) => {
         const classActivities = activities.filter((a) => a.class_id === c.id);
@@ -1162,14 +1181,14 @@ app.get("/admin/logout", requireAdmin, (req, res) => {
           </div>`,
           )
           .join("");
-});
-        return `
-  storage: bookStorage,
-  fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 },
-});
 
-// Error Handlers
+        return `
+        <div class="class-section" id="class-${c.id}">
+          <div class="class-header centered">
+            <div class="class-title-wrap">
+              <h2>${esc(c.class_name)}</h2>
+              <span class="age-session">${esc(c.age_group)} | ${esc(c.session)}</span>
+            </div>
             ${
               isAdmin
                 ? `
@@ -1180,11 +1199,11 @@ app.get("/admin/logout", requireAdmin, (req, res) => {
               </div>`
                 : ""
             }
-  if (err) return res.redirect(`/classes?error=${err.code || "UPLOAD"}`);
-
-  next();
-}
-function handleReceiptError(err, req, res, next) {
+          </div>
+          
+          <div class="class-content centered">
+            <h4 class="section-subtitle">Activities & Learning</h4>
+            <div class="title-underline mini"></div>
             <div class="activities-grid centered">
               ${activityBadges}
               ${
@@ -1197,11 +1216,9 @@ function handleReceiptError(err, req, res, next) {
                   : ""
               }
             </div>
-          </div>
 
-}
-
-// Middleware: Require Admin
+            <h4 class="section-subtitle" style="margin-top:40px;">Prescribed Books</h4>
+            <div class="title-underline mini"></div>
             <div class="books-grid">
               ${bookCards}
               ${
@@ -1221,8 +1238,8 @@ function handleReceiptError(err, req, res, next) {
                   : ""
               }
             </div>
-  if (req.session && req.session.admin === true) return next();
-  res.redirect("/admin-login.html");
+          </div>
+        </div>`;
       })
       .join("");
 
@@ -1261,7 +1278,7 @@ function handleReceiptError(err, req, res, next) {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css?v=1.2" />
 </head>
 <body>
   <div class="top-bar">
@@ -1287,6 +1304,10 @@ function handleReceiptError(err, req, res, next) {
       <p>A structured learning journey designed for early childhood development.</p>
     </div>
   </section>
+
+  <div class="sticky-class-nav">
+    ${navLinks}
+  </div>
 
   <section class="why">
     <div class="container">
@@ -1335,6 +1356,43 @@ function handleReceiptError(err, req, res, next) {
     const menu = document.getElementById("menu");
     const nav = document.getElementById("nav");
     if(menu && nav) menu.addEventListener("click", () => nav.classList.toggle("active"));
+
+    // Smooth scroll for sticky nav
+    document.querySelectorAll('.class-nav-link').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 130, // nav height + buffer
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // Active state highlighting while scrolling
+    const classSections = document.querySelectorAll('.class-section');
+    const navLinks = document.querySelectorAll('.class-nav-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      classSections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (pageYOffset >= sectionTop - 150) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').substring(1) === current) {
+          link.classList.add('active');
+        }
+      });
+    });
   </script>
 </body>
 </html>`;
@@ -1424,193 +1482,3 @@ app.post("/admin/classes/book/delete/:id", requireAdmin, (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-
-    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Classes | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
-      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
-      ${getNavbar(req, "classes")}
-      <section class="hero" style="min-height:30vh;"><div class="hero-text"><h1>Our Classes</h1></div></section>
-      <section class="why"><div class="container">${error ? `<div class="input-error">${error}</div>` : ""}${addClass}<div class="classes-container">${sections || "<p>No classes.</p>"}</div></div></section>
-      <footer class="footer"><div class="footer-bottom">© 2026 BeSchool</div></footer>
-    </body></html>`);
-  } catch (e) {
-    res.status(500).send("Error");
-  }
-});
-
-// Admin Dashboard
-app.get("/admin/dashboard", requireAdmin, async (req, res) => {
-  const all = (s, p = []) =>
-    new Promise((res, rej) => db.all(s, p, (e, r) => (e ? rej(e) : res(r))));
-  const get = (s, p = []) =>
-    new Promise((res, rej) => db.get(s, p, (e, r) => (e ? rej(e) : res(r))));
-
-  try {
-    const [rows, total, classRows] = await Promise.all([
-      all("SELECT * FROM admissions ORDER BY created_at DESC"),
-      get("SELECT COUNT(*) AS c FROM admissions"),
-      all(
-        "SELECT class_applied AS cls, COUNT(*) AS cnt FROM admissions GROUP BY class_applied",
-      ),
-    ]);
-
-    const table = rows
-      .map(
-        (r) =>
-          `<tr><td>${esc(r.first_name)} ${esc(r.last_name)}</td><td>${esc(r.class_applied)}</td><td>${esc(r.parent_first_name)}</td><td>${esc(r.phone)}</td><td><form action="/admin/delete/${r.id}" method="POST"><button class="action-btn danger">Delete</button></form></td></tr>`,
-      )
-      .join("");
-    const chips = classRows
-      .map((c) => `<span class="chip"><b>${esc(c.cls)}</b>: ${c.cnt}</span>`)
-      .join("");
-
-    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Admin | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
-      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
-      ${getNavbar(req, "admin")}
-      <section class="why"><div class="container">
-        <h2>Admin Dashboard</h2>
-        <div class="stats-grid"><div class="stat-card red"><div>Total: ${total.c}</div></div><div class="stat-card white"><div>${chips}</div></div></div>
-        <div class="table-wrapper"><table class="admin-table"><thead><tr><th>Student</th><th>Class</th><th>Parent</th><th>Phone</th><th>Action</th></tr></thead><tbody>${table || "<tr><td colspan='5'>No data</td></tr>"}</tbody></table></div>
-      </div></section>
-    </body></html>`);
-  } catch (e) {
-    res.status(500).send("Error");
-  }
-});
-
-// Other CRUDs and Listen
-app.post("/admin/delete/:id", requireAdmin, (req, res) => {
-  db.run("DELETE FROM admissions WHERE id=?", [req.params.id], () =>
-    res.redirect("/admin/dashboard"),
-  );
-});
-app.post("/admin/classes/add", requireAdmin, (req, res) => {
-  db.run(
-    "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?,?,?,?)",
-    [
-      req.body.class_name,
-      req.body.age_group,
-      req.body.session,
-      new Date().toISOString(),
-    ],
-    () => res.redirect("/classes"),
-  );
-});
-app.post("/admin/classes/delete/:id", requireAdmin, (req, res) => {
-  db.run("DELETE FROM classes WHERE id=?", [req.params.id], () =>
-    res.redirect("/classes"),
-  );
-});
-app.post("/admin/classes/activity/add/:id", requireAdmin, (req, res) => {
-  db.run(
-    "INSERT INTO class_activities (class_id, activity_name) VALUES (?,?)",
-    [req.params.id, req.body.activity_name],
-    () => res.redirect("/classes"),
-  );
-});
-app.post("/admin/classes/activity/delete/:id", requireAdmin, (req, res) => {
-  db.run("DELETE FROM class_activities WHERE id=?", [req.params.id], () =>
-    res.redirect("/classes"),
-  );
-});
-app.post(
-  "/admin/classes/book/add/:id",
-  requireAdmin,
-  uploadBook.single("book_image"),
-  (req, res) => {
-    db.run(
-      "INSERT INTO class_books (class_id, book_name, publisher, image_path) VALUES (?,?,?,?)",
-      [
-        req.params.id,
-        req.body.book_name,
-        req.body.publisher,
-        `photos/class-books/${req.file.filename}`,
-      ],
-      () => res.redirect("/classes"),
-    );
-  },
-);
-app.post("/admin/classes/book/delete/:id", requireAdmin, (req, res) => {
-  db.run("DELETE FROM class_books WHERE id=?", [req.params.id], () =>
-    res.redirect("/classes"),
-  );
-});
-
-// Admissions form submission
-app.post("/submit-admission", (req, res) => {
-  const {
-    first_name,
-    last_name,
-    class_applied,
-    dob,
-    parent_first_name,
-    parent_last_name,
-    address,
-    city,
-    state,
-    phone,
-    email,
-  } = req.body;
-  db.run(
-    "INSERT INTO admissions (first_name, last_name, class_applied, dob, parent_first_name, parent_last_name, address, city, state, phone, email, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-    [
-      first_name,
-      last_name,
-      class_applied,
-      dob,
-      parent_first_name,
-      parent_last_name,
-      address,
-      city,
-      state,
-      phone,
-      email,
-      new Date().toISOString(),
-    ],
-    () => res.redirect("/admissions.html?success=true"),
-  );
-});
-
-// Teachers Dynamic
-app.get("/teachers", async (req, res) => {
-  const isAdmin = !!(req.session && req.session.admin === true);
-  db.all("SELECT * FROM teachers ORDER BY id ASC", [], (err, rows) => {
-    const cards = rows
-      .map(
-        (t) =>
-          `<div class="teacher-card"><img src="/${t.photo}"><h3>${esc(t.name)}</h3><p>${esc(t.qualification)}</p><p>${esc(t.subject)}</p>${isAdmin ? `<form action="/admin/teachers/delete/${t.id}" method="POST"><button class="action-btn danger">Delete</button></form>` : ""}</div>`,
-      )
-      .join("");
-    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Teachers | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
-      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
-      ${getNavbar(req, "teachers")}
-      <section class="why"><div class="container"><h2>Our Teachers</h2><div class="teacher-grid">${cards}</div></div></section>
-    </body></html>`);
-  });
-});
-
-app.post("/admin/teachers/delete/:id", requireAdmin, (req, res) => {
-  db.run("DELETE FROM teachers WHERE id=?", [req.params.id], () =>
-    res.redirect("/teachers"),
-  );
-});
-
-// Admin view payments
-app.get("/fees", requireAdmin, (req, res) => {
-  db.all("SELECT * FROM payments ORDER BY created_at DESC", [], (err, rows) => {
-    const items = rows
-      .map(
-        (p) =>
-          `<tr><td>${esc(p.student_name)}</td><td>${esc(p.class)}</td><td><a href="/${p.receipt}" target="_blank">View</a></td></tr>`,
-      )
-      .join("");
-    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Fees | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
-      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
-      ${getNavbar(req, "fees")}
-      <section class="why"><div class="container"><h2>Fee Submissions</h2><div class="table-wrapper"><table class="admin-table"><thead><tr><th>Student</th><th>Class</th><th>Receipt</th></tr></thead><tbody>${items || "<tr><td colspan='3'>No data</td></tr>"}</tbody></table></div></div></section>
-    </body></html>`);
-  });
-});
-
-app.listen(PORT, () =>
-  console.log(`Server running at http://localhost:${PORT}`),
-);
