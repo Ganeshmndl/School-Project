@@ -49,12 +49,21 @@ app.get("/fees.html", (req, res, next) => {
   next();
 });
 
+// Redirect static classes.html to dynamic /classes
+app.get("/classes.html", (req, res) => {
+  res.redirect("/classes");
+});
+
 // Serve the existing static site
 app.use(express.static(STATIC_DIR));
 app.use("/photos", express.static(path.join(STATIC_DIR, "photos")));
 const UPLOAD_DIR = path.join(__dirname, "uploads");
+const CLASS_BOOKS_DIR = path.join(STATIC_DIR, "photos", "class-books");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR);
+}
+if (!fs.existsSync(CLASS_BOOKS_DIR)) {
+  fs.mkdirSync(CLASS_BOOKS_DIR, { recursive: true });
 }
 app.use("/uploads", express.static(UPLOAD_DIR));
 
@@ -103,6 +112,33 @@ db.serialize(() => {
       created_at TEXT NOT NULL
     )`,
   );
+  db.run(
+    `CREATE TABLE IF NOT EXISTS classes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_name TEXT NOT NULL,
+      age_group TEXT,
+      session TEXT,
+      created_at TEXT NOT NULL
+    )`,
+  );
+  db.run(
+    `CREATE TABLE IF NOT EXISTS class_activities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_id INTEGER NOT NULL,
+      activity_name TEXT NOT NULL,
+      FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
+    )`,
+  );
+  db.run(
+    `CREATE TABLE IF NOT EXISTS class_books (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_id INTEGER NOT NULL,
+      book_name TEXT NOT NULL,
+      publisher TEXT,
+      image_path TEXT,
+      FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
+    )`,
+  );
   db.get("SELECT COUNT(*) AS c FROM teachers", [], (err, row) => {
     if (err) return;
     if (!row || !row.c) {
@@ -131,28 +167,103 @@ db.serialize(() => {
           subject: "Subject: Social Studies",
           photo: "photos/image3.JPG",
         },
-      ];
+          photo: "photos/image1.jpg",
       const stmt = db.prepare(
         `INSERT INTO teachers (name, qualification, subject, photo) VALUES (?, ?, ?, ?)`,
       );
       seeds.forEach((t) =>
         stmt.run(t.name, t.qualification, t.subject, t.photo),
       );
-      stmt.finalize();
-    }
-  });
-});
+          name: "Mr. Ravi Kumar",
+          qualification: "M.Sc., B.Ed",
+          subject: "Subject: Mathematics",
+        },
+    if (err || (row && row.c > 0)) return;
+    const now = new Date().toISOString();
 
+    const demoClasses = [
+      {
+        name: "Nursery",
+        age: "3–4 Years",
+        session: "2026–2027",
+        activities: ["Rhymes", "Drawing", "Storytelling", "Clay Modeling"],
+        books: [
+          photo: "photos/image4.jpg",
+        },
+          { name: "Early Rhymes", pub: "Song Birds", img: "books3.jpg" },
+        ],
+      },
+      {
+        name: "LKG",
+        age: "4–5 Years",
+        session: "2026–2027",
+        activities: ["Basic Writing", "Number Fun", "Music", "Coloring"],
+        books: [
+          subject: "Subject: Social Studies",
+          photo: "photos/image3.JPG",
+          { name: "Art & Craft", pub: "Creative Minds", img: "Book2.jpeg" },
+        ],
+      },
+      {
+        name: "UKG",
+        age: "5–6 Years",
+        session: "2026–2027",
+        activities: ["Reading", "Simple Addition", "Drama", "Outdoor Play"],
+        books: [
+        `INSERT INTO teachers (name, qualification, subject, photo) VALUES (?, ?, ?, ?)`,
+      );
+          { name: "My World", pub: "Science Kids", img: "Book1.jpg" },
+        ],
+      },
+    ];
+
+    db.serialize(() => {
+      demoClasses.forEach((c) => {
+        db.run(
+          "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?, ?, ?, ?)",
+          [c.name, c.age, c.session, now],
+          function (err) {
+            if (err) {
+              console.error("Error inserting class:", err);
+              return;
+            }
+  db.get("SELECT COUNT(*) AS c FROM classes", [], (err, row) => {
+            console.log(`Seeding class ${c.name} with ID ${cid}`);
+
+            c.activities.forEach((a) => {
+              db.run(
+                "INSERT INTO class_activities (class_id, activity_name) VALUES (?, ?)",
+                [cid, a],
+              );
+            });
+
+            c.books.forEach((b) => {
+              const imgPath = `photos/class-books/${b.img}`;
+              db.run(
+                "INSERT INTO class_books (class_id, book_name, publisher, image_path) VALUES (?, ?, ?, ?)",
+                [cid, b.name, b.pub, imgPath],
+                (err) => {
+                  if (err) console.error("Error inserting book:", err);
+                },
+              );
+            });
+          },
+        );
+          name: "Nursery",
+    });
+          session: "2026–2027",
+          activities: ["Rhymes", "Drawing", "Storytelling", "Clay Modeling"],
+          books: [
 // ===== Multer config for teacher profile photos =====
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
+            { name: "First Coloring", pub: "Color Joy", img: "Book2.jpeg" },
+            { name: "Early Rhymes", pub: "Song Birds", img: "books3.jpg" },
+          ],
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname || "") || "";
     cb(null, "teacher-" + unique + ext);
-  },
-});
-const fileFilter = (req, file, cb) => {
+          name: "LKG",
+          age: "4–5 Years",
+          session: "2026–2027",
   if (
     file &&
     typeof file.mimetype === "string" &&
@@ -164,13 +275,28 @@ const fileFilter = (req, file, cb) => {
     err.code = "INVALID_FILE_TYPE";
     cb(err);
   }
-};
+            { name: "Number Magic", pub: "Math World", img: "book4.jpg" },
 const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
 });
-
+            { name: "Art & Craft", pub: "Creative Minds", img: "Book2.jpeg" },
+// Multer for class book images
+          ],
+        },
+        {
+          name: "UKG",
+    const ext = path.extname(file.originalname || "") || "";
+    cb(null, "book-" + unique + ext);
+          session: "2026–2027",
+          activities: ["Reading", "Simple Addition", "Drama", "Outdoor Play"],
+const uploadBook = multer({
+  storage: bookStorage,
+  fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
+            { name: "Reader's Choice", pub: "Story Hub", img: "books3.jpg" },
 // Handle Multer errors centrally for routes that use upload.single("photo")
 function handleUploadError(err, req, res, next) {
   if (err) {
@@ -182,10 +308,10 @@ function handleUploadError(err, req, res, next) {
           : "UPLOAD";
     return res.redirect(`/teachers?upload_error=${code}`);
   }
-  next();
-}
+        },
+      ];
 
-function handleReceiptError(err, req, res, next) {
+      db.serialize(() => {
   if (err) {
     const code =
       err.code === "LIMIT_FILE_SIZE"
@@ -194,6 +320,19 @@ function handleReceiptError(err, req, res, next) {
           ? "INVALID_FILE_TYPE"
           : "UPLOAD";
     return res.redirect(`/fees.html?fees_error=${code}`);
+  }
+          db.run(
+            "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?, ?, ?, ?)",
+            [c.name, c.age, c.session, now],
+function handleBookError(err, req, res, next) {
+  if (err) {
+    const code =
+      err.code === "LIMIT_FILE_SIZE"
+        ? "LIMIT_FILE_SIZE"
+        : err.message === "INVALID_FILE_TYPE"
+          ? "INVALID_FILE_TYPE"
+          : "UPLOAD";
+    return res.redirect(`/classes?error=${code}`);
   }
   next();
 }
@@ -962,6 +1101,516 @@ app.get("/admin/logout", requireAdmin, (req, res) => {
   });
 });
 
+// ===== Classes (Dynamic) =====
+});
+
+// Multer Config
+
+  const all = (sql, p = []) =>
+    new Promise((resolve, reject) =>
+      db.all(sql, p, (err, rows) => (err ? reject(err) : resolve(rows))),
+    );
+
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+    const sections = classes
+      .map((c) => {
+        const classActivities = activities.filter((a) => a.class_id === c.id);
+        const classBooks = books.filter((b) => b.class_id === c.id);
+
+        const activityBadges = classActivities
+          .map(
+            (a) => `
+          <div class="activity-badge-wrap">
+            <span class="activity-badge">${esc(a.activity_name)}</span>
+            ${
+              isAdmin
+                ? `
+              <div class="crud-mini">
+                <form action="/admin/classes/activity/delete/${a.id}" method="POST" onsubmit="return confirm('Delete activity?')">
+                  <button type="submit" class="btn-icon">×</button>
+                </form>
+              </div>`
+                : ""
+            }
+          </div>`,
+          )
+          .join("");
+
+        const bookCards = classBooks
+          .map(
+            (b) => `
+          <div class="book-card">
+            <img src="/${b.image_path}" alt="${esc(b.book_name)}">
+            <div class="book-info">
+              <h4>${esc(b.book_name)}</h4>
+              <p>Publisher: ${esc(b.publisher)}</p>
+              ${
+                isAdmin
+                  ? `
+                <div class="book-actions">
+                  <form action="/admin/classes/book/delete/${b.id}" method="POST" onsubmit="return confirm('Delete book?')">
+                    <button type="submit" class="action-btn danger small">Delete</button>
+                  </form>
+                </div>`
+                  : ""
+              }
+            </div>
+          </div>`,
+          )
+          .join("");
+});
+        return `
+  storage: bookStorage,
+  fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
+
+// Error Handlers
+            ${
+              isAdmin
+                ? `
+              <div class="class-admin-actions" style="margin-top:15px;">
+                <form action="/admin/classes/delete/${c.id}" method="POST" onsubmit="return confirm('Delete this class and all its data?')">
+                  <button type="submit" class="action-btn danger small">Delete Class</button>
+                </form>
+              </div>`
+                : ""
+            }
+  if (err) return res.redirect(`/classes?error=${err.code || "UPLOAD"}`);
+
+  next();
+}
+function handleReceiptError(err, req, res, next) {
+            <div class="activities-grid centered">
+              ${activityBadges}
+              ${
+                isAdmin
+                  ? `
+                <form class="add-mini-form" action="/admin/classes/activity/add/${c.id}" method="POST">
+                  <input name="activity_name" placeholder="New activity" required>
+                  <button type="submit" class="btn-add">+</button>
+                </form>`
+                  : ""
+              }
+            </div>
+          </div>
+
+}
+
+// Middleware: Require Admin
+            <div class="books-grid">
+              ${bookCards}
+              ${
+                isAdmin
+                  ? `
+                <div class="book-card add-book-card">
+                  <details>
+                    <summary class="add-book-summary">+ Add Book</summary>
+                    <form action="/admin/classes/book/add/${c.id}" method="POST" enctype="multipart/form-data" class="add-book-form">
+                      <input name="book_name" placeholder="Book Name" required>
+                      <input name="publisher" placeholder="Publisher" required>
+                      <input type="file" name="book_image" accept="image/*" required>
+                      <button type="submit" class="action-btn yellow">Save Book</button>
+                    </form>
+                  </details>
+                </div>`
+                  : ""
+              }
+            </div>
+  if (req.session && req.session.admin === true) return next();
+  res.redirect("/admin-login.html");
+      })
+      .join("");
+
+    const addClassForm = isAdmin
+      ? `
+      <div class="admin-panel" style="margin-bottom: 40px;">
+        <details>
+          <summary class="action-btn yellow">+ Add New Class</summary>
+          <form action="/admin/classes/add" method="POST" style="margin-top:15px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Class Name</label>
+                <input name="class_name" placeholder="e.g. Nursery" required>
+              </div>
+              <div class="form-group">
+                <label>Age Group</label>
+                <input name="age_group" placeholder="e.g. 3-4 Years" required>
+              </div>
+              <div class="form-group">
+                <label>Session</label>
+                <input name="session" placeholder="e.g. 2026-2027" required>
+              </div>
+            </div>
+            <button type="submit" class="action-btn yellow">Create Class</button>
+          </form>
+        </details>
+      </div>`
+      : "";
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classes | BeSchool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="top-bar">
+    <div>📞 +91 89057 11200</div>
+    <div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div>
+  </div>
+  <header>
+    <div class="logo"><span>B</span>eSchool</div>
+    <div class="menu-toggle" id="menu">☰</div>
+    <nav id="nav">
+      <a href="/index.html">Home</a>
+      <a href="/about.html">About Us</a>
+      <a class="active" href="/classes">Classes</a>
+      <a href="/teachers">Teachers</a>
+      <a href="${isAdmin ? "/fees" : "/fees.html"}">Fees</a>
+    </nav>
+    <a href="/admissions.html" class="btn">Admissions</a>
+  </header>
+
+  <section class="hero" style="min-height: 40vh;">
+    <div class="hero-text">
+      <h1>Our Classes</h1>
+      <p>A structured learning journey designed for early childhood development.</p>
+    </div>
+  </section>
+
+  <section class="why">
+    <div class="container">
+      ${
+        error
+          ? `<div class="input-error" style="margin-bottom:20px;">Error: ${esc(
+              error,
+            )}</div>`
+          : ""
+      }
+      ${addClassForm}
+      <div class="classes-container">
+        ${sections || '<p style="text-align:center;">No classes found.</p>'}
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-box footer-about">
+        <h3>BeSchool</h3>
+        <p>A safe and joyful learning environment for young minds to grow with confidence and values.</p>
+      </div>
+      <div class="footer-row">
+        <div class="footer-box">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/about.html">About Us</a></li>
+            <li><a href="/classes">Classes</a></li>
+            <li><a href="/teachers">Teachers</a></li>
+          </ul>
+        </div>
+        <div class="footer-box">
+          <h4>Contact</h4>
+          <p>📍 Your School Address</p>
+          <p>📞 +91 89057 11200</p>
+          <p>info@beschool.com</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 BeSchool. All rights reserved.</div>
+  </footer>
+
+  <script>
+    const menu = document.getElementById("menu");
+    const nav = document.getElementById("nav");
+    if(menu && nav) menu.addEventListener("click", () => nav.classList.toggle("active"));
+  </script>
+</body>
+</html>`;
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Database error");
+  }
+});
+
+// Admin: Class CRUD
+app.post("/admin/classes/add", requireAdmin, (req, res) => {
+  const { class_name, age_group, session } = req.body;
+  if (!class_name) return res.redirect("/classes?error=MissingData");
+  const now = new Date().toISOString();
+  db.run(
+    "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?, ?, ?, ?)",
+    [class_name, age_group, session, now],
+    (err) => {
+      if (err) return res.redirect("/classes?error=DB");
+      res.redirect("/classes");
+    },
+  );
+});
+
+app.post("/admin/classes/delete/:id", requireAdmin, (req, res) => {
+  const id = req.params.id;
+  db.run("DELETE FROM classes WHERE id = ?", [id], (err) => {
+    res.redirect("/classes");
+  });
+});
+
+// Admin: Activity CRUD
+app.post("/admin/classes/activity/add/:cid", requireAdmin, (req, res) => {
+  const { activity_name } = req.body;
+  const cid = req.params.cid;
+  if (!activity_name) return res.redirect("/classes");
+  db.run(
+    "INSERT INTO class_activities (class_id, activity_name) VALUES (?, ?)",
+    [cid, activity_name],
+    (err) => res.redirect("/classes"),
+  );
+});
+
+app.post("/admin/classes/activity/delete/:id", requireAdmin, (req, res) => {
+  db.run("DELETE FROM class_activities WHERE id = ?", [req.params.id], (err) =>
+    res.redirect("/classes"),
+  );
+});
+
+// Admin: Book CRUD
+app.post(
+  "/admin/classes/book/add/:cid",
+  requireAdmin,
+  uploadBook.single("book_image"),
+  handleBookError,
+  (req, res) => {
+    const { book_name, publisher } = req.body;
+    const cid = req.params.cid;
+    if (!book_name || !req.file)
+      return res.redirect("/classes?error=MissingBookData");
+    const image_path = `photos/class-books/${req.file.filename}`;
+    db.run(
+      "INSERT INTO class_books (class_id, book_name, publisher, image_path) VALUES (?, ?, ?, ?)",
+      [cid, book_name, publisher, image_path],
+      (err) => res.redirect("/classes"),
+    );
+  },
+);
+
+app.post("/admin/classes/book/delete/:id", requireAdmin, (req, res) => {
+  db.get(
+    "SELECT image_path FROM class_books WHERE id = ?",
+    [req.params.id],
+    (err, row) => {
+      if (row && row.image_path) {
+        const fullPath = path.join(STATIC_DIR, row.image_path);
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      }
+      db.run("DELETE FROM class_books WHERE id = ?", [req.params.id], (err) =>
+        res.redirect("/classes"),
+      );
+    },
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Classes | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
+      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
+      ${getNavbar(req, "classes")}
+      <section class="hero" style="min-height:30vh;"><div class="hero-text"><h1>Our Classes</h1></div></section>
+      <section class="why"><div class="container">${error ? `<div class="input-error">${error}</div>` : ""}${addClass}<div class="classes-container">${sections || "<p>No classes.</p>"}</div></div></section>
+      <footer class="footer"><div class="footer-bottom">© 2026 BeSchool</div></footer>
+    </body></html>`);
+  } catch (e) {
+    res.status(500).send("Error");
+  }
+});
+
+// Admin Dashboard
+app.get("/admin/dashboard", requireAdmin, async (req, res) => {
+  const all = (s, p = []) =>
+    new Promise((res, rej) => db.all(s, p, (e, r) => (e ? rej(e) : res(r))));
+  const get = (s, p = []) =>
+    new Promise((res, rej) => db.get(s, p, (e, r) => (e ? rej(e) : res(r))));
+
+  try {
+    const [rows, total, classRows] = await Promise.all([
+      all("SELECT * FROM admissions ORDER BY created_at DESC"),
+      get("SELECT COUNT(*) AS c FROM admissions"),
+      all(
+        "SELECT class_applied AS cls, COUNT(*) AS cnt FROM admissions GROUP BY class_applied",
+      ),
+    ]);
+
+    const table = rows
+      .map(
+        (r) =>
+          `<tr><td>${esc(r.first_name)} ${esc(r.last_name)}</td><td>${esc(r.class_applied)}</td><td>${esc(r.parent_first_name)}</td><td>${esc(r.phone)}</td><td><form action="/admin/delete/${r.id}" method="POST"><button class="action-btn danger">Delete</button></form></td></tr>`,
+      )
+      .join("");
+    const chips = classRows
+      .map((c) => `<span class="chip"><b>${esc(c.cls)}</b>: ${c.cnt}</span>`)
+      .join("");
+
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Admin | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
+      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
+      ${getNavbar(req, "admin")}
+      <section class="why"><div class="container">
+        <h2>Admin Dashboard</h2>
+        <div class="stats-grid"><div class="stat-card red"><div>Total: ${total.c}</div></div><div class="stat-card white"><div>${chips}</div></div></div>
+        <div class="table-wrapper"><table class="admin-table"><thead><tr><th>Student</th><th>Class</th><th>Parent</th><th>Phone</th><th>Action</th></tr></thead><tbody>${table || "<tr><td colspan='5'>No data</td></tr>"}</tbody></table></div>
+      </div></section>
+    </body></html>`);
+  } catch (e) {
+    res.status(500).send("Error");
+  }
+});
+
+// Other CRUDs and Listen
+app.post("/admin/delete/:id", requireAdmin, (req, res) => {
+  db.run("DELETE FROM admissions WHERE id=?", [req.params.id], () =>
+    res.redirect("/admin/dashboard"),
+  );
+});
+app.post("/admin/classes/add", requireAdmin, (req, res) => {
+  db.run(
+    "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?,?,?,?)",
+    [
+      req.body.class_name,
+      req.body.age_group,
+      req.body.session,
+      new Date().toISOString(),
+    ],
+    () => res.redirect("/classes"),
+  );
+});
+app.post("/admin/classes/delete/:id", requireAdmin, (req, res) => {
+  db.run("DELETE FROM classes WHERE id=?", [req.params.id], () =>
+    res.redirect("/classes"),
+  );
+});
+app.post("/admin/classes/activity/add/:id", requireAdmin, (req, res) => {
+  db.run(
+    "INSERT INTO class_activities (class_id, activity_name) VALUES (?,?)",
+    [req.params.id, req.body.activity_name],
+    () => res.redirect("/classes"),
+  );
+});
+app.post("/admin/classes/activity/delete/:id", requireAdmin, (req, res) => {
+  db.run("DELETE FROM class_activities WHERE id=?", [req.params.id], () =>
+    res.redirect("/classes"),
+  );
+});
+app.post(
+  "/admin/classes/book/add/:id",
+  requireAdmin,
+  uploadBook.single("book_image"),
+  (req, res) => {
+    db.run(
+      "INSERT INTO class_books (class_id, book_name, publisher, image_path) VALUES (?,?,?,?)",
+      [
+        req.params.id,
+        req.body.book_name,
+        req.body.publisher,
+        `photos/class-books/${req.file.filename}`,
+      ],
+      () => res.redirect("/classes"),
+    );
+  },
+);
+app.post("/admin/classes/book/delete/:id", requireAdmin, (req, res) => {
+  db.run("DELETE FROM class_books WHERE id=?", [req.params.id], () =>
+    res.redirect("/classes"),
+  );
+});
+
+// Admissions form submission
+app.post("/submit-admission", (req, res) => {
+  const {
+    first_name,
+    last_name,
+    class_applied,
+    dob,
+    parent_first_name,
+    parent_last_name,
+    address,
+    city,
+    state,
+    phone,
+    email,
+  } = req.body;
+  db.run(
+    "INSERT INTO admissions (first_name, last_name, class_applied, dob, parent_first_name, parent_last_name, address, city, state, phone, email, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+    [
+      first_name,
+      last_name,
+      class_applied,
+      dob,
+      parent_first_name,
+      parent_last_name,
+      address,
+      city,
+      state,
+      phone,
+      email,
+      new Date().toISOString(),
+    ],
+    () => res.redirect("/admissions.html?success=true"),
+  );
+});
+
+// Teachers Dynamic
+app.get("/teachers", async (req, res) => {
+  const isAdmin = !!(req.session && req.session.admin === true);
+  db.all("SELECT * FROM teachers ORDER BY id ASC", [], (err, rows) => {
+    const cards = rows
+      .map(
+        (t) =>
+          `<div class="teacher-card"><img src="/${t.photo}"><h3>${esc(t.name)}</h3><p>${esc(t.qualification)}</p><p>${esc(t.subject)}</p>${isAdmin ? `<form action="/admin/teachers/delete/${t.id}" method="POST"><button class="action-btn danger">Delete</button></form>` : ""}</div>`,
+      )
+      .join("");
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Teachers | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
+      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
+      ${getNavbar(req, "teachers")}
+      <section class="why"><div class="container"><h2>Our Teachers</h2><div class="teacher-grid">${cards}</div></div></section>
+    </body></html>`);
+  });
+});
+
+app.post("/admin/teachers/delete/:id", requireAdmin, (req, res) => {
+  db.run("DELETE FROM teachers WHERE id=?", [req.params.id], () =>
+    res.redirect("/teachers"),
+  );
+});
+
+// Admin view payments
+app.get("/fees", requireAdmin, (req, res) => {
+  db.all("SELECT * FROM payments ORDER BY created_at DESC", [], (err, rows) => {
+    const items = rows
+      .map(
+        (p) =>
+          `<tr><td>${esc(p.student_name)}</td><td>${esc(p.class)}</td><td><a href="/${p.receipt}" target="_blank">View</a></td></tr>`,
+      )
+      .join("");
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Fees | BeSchool</title><link rel="stylesheet" href="/style.css"></head><body>
+      <div class="top-bar"><div>📞 +91 89057 11200</div><div>🕒 Mon–Fri: 9:00 AM – 3:30 PM</div></div>
+      ${getNavbar(req, "fees")}
+      <section class="why"><div class="container"><h2>Fee Submissions</h2><div class="table-wrapper"><table class="admin-table"><thead><tr><th>Student</th><th>Class</th><th>Receipt</th></tr></thead><tbody>${items || "<tr><td colspan='3'>No data</td></tr>"}</tbody></table></div></div></section>
+    </body></html>`);
+  });
+});
+
+app.listen(PORT, () =>
+  console.log(`Server running at http://localhost:${PORT}`),
+);
