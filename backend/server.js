@@ -8,12 +8,169 @@ const session = require("express-session");
 const bcrypt = require("bcrypt");
 const rateLimit = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
+
+console.log("Mongo URI loaded:", !!process.env.MONGODB_URI);
+
+const Admission = require("./models/Admission");
+const Teacher = require("./models/Teacher");
+const Payment = require("./models/Payment");
+const Class = require("./models/Class");
+const ClassActivity = require("./models/ClassActivity");
+const ClassBook = require("./models/ClassBook");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const STATIC_DIR = path.join(__dirname, "../frontend");
 const DB_PATH = path.join(__dirname, "admissions.db");
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+    console.log("Connected to MongoDB Atlas successfully");
+    seedInitialData();
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+
+// Helper function to get next id for each collection
+async function getNextId(model) {
+  const lastDoc = await model.findOne().sort({ id: -1 });
+  return lastDoc ? lastDoc.id + 1 : 1;
+}
+
+// Seed initial data
+async function seedInitialData() {
+  try {
+    // Seed teachers
+    const teacherCount = await Teacher.countDocuments();
+    if (teacherCount === 0) {
+      const teacherSeeds = [
+        {
+          id: 1,
+          name: "Ms. Anjali Sharma",
+          qualification: "M.A., B.Ed",
+          subject: "Subject: English",
+          photo: "photos/image1.jpg",
+        },
+        {
+          id: 2,
+          name: "Mr. Ravi Kumar",
+          qualification: "M.Sc., B.Ed",
+          subject: "Subject: Mathematics",
+          photo: "photos/image2.jpg",
+        },
+        {
+          id: 3,
+          name: "Ms. Neha Verma",
+          qualification: "B.Sc., D.El.Ed",
+          subject: "Subject: Science",
+          photo: "photos/image4.jpg",
+        },
+        {
+          id: 4,
+          name: "Mr. Suresh Patel",
+          qualification: "M.A., B.Ed",
+          subject: "Subject: Social Studies",
+          photo: "photos/image3.JPG",
+        },
+      ];
+      await Teacher.insertMany(teacherSeeds);
+      console.log("Seeded initial teachers data");
+    }
+
+    // Seed classes, activities, and books
+    const classCount = await Class.countDocuments();
+    if (classCount === 0) {
+      const now = new Date().toISOString();
+      const demoClasses = [
+        {
+          id: 1,
+          class_name: "Nursery",
+          age_group: "3–4 Years",
+          session: "2026–2027",
+          created_at: now,
+          activities: ["Rhymes", "Drawing", "Storytelling", "Clay Modeling"],
+          books: [
+            {
+              book_name: "First Coloring",
+              publisher: "Color Joy",
+              image_path: "photos/class-books/Book2.jpeg",
+            },
+            {
+              book_name: "Early Rhymes",
+              publisher: "Song Birds",
+              image_path: "photos/class-books/books3.jpg",
+            },
+          ],
+        },
+        {
+          id: 2,
+          class_name: "LKG",
+          age_group: "4–5 Years",
+          session: "2026–2027",
+          created_at: now,
+          activities: ["Basic Writing", "Number Fun", "Music", "Coloring"],
+          books: [
+            {
+              book_name: "Number Magic",
+              publisher: "Math World",
+              image_path: "photos/class-books/book4.jpg",
+            },
+            {
+              book_name: "Art & Craft",
+              publisher: "Creative Minds",
+              image_path: "photos/class-books/Book2.jpeg",
+            },
+          ],
+        },
+        {
+          id: 3,
+          class_name: "UKG",
+          age_group: "5–6 Years",
+          session: "2026–2027",
+          created_at: now,
+          activities: ["Reading", "Simple Addition", "Drama", "Outdoor Play"],
+          books: [
+            {
+              book_name: "My World",
+              publisher: "Science Kids",
+              image_path: "photos/class-books/Book1.jpg",
+            },
+            {
+              book_name: "Reader's Choice",
+              publisher: "Story Hub",
+              image_path: "photos/class-books/books3.jpg",
+            },
+          ],
+        },
+      ];
+
+      for (const c of demoClasses) {
+        await Class.create(c);
+        let activityId = 1;
+        for (const a of c.activities) {
+          await ClassActivity.create({
+            id: activityId++,
+            class_id: c.id,
+            activity_name: a,
+          });
+        }
+        let bookId = 1;
+        for (const b of c.books) {
+          await ClassBook.create({ id: bookId++, class_id: c.id, ...b });
+        }
+      }
+      console.log("Seeded initial classes, activities, and books data");
+    }
+  } catch (err) {
+    console.error("Error seeding initial data:", err);
+  }
+}
 
 app.use(cors());
 app.use(express.json());
@@ -325,7 +482,7 @@ function handleBookError(err, req, res, next) {
 }
 
 // API endpoint to accept form submissions
-app.post("/api/admissions", (req, res) => {
+app.post("/api/admissions", async (req, res) => {
   const {
     first_name,
     last_name,
@@ -357,49 +514,40 @@ app.post("/api/admissions", (req, res) => {
       .json({ ok: false, error: "Missing fields", fields: missing });
   }
 
-  const created_at = new Date().toISOString();
-
-  const stmt = db.prepare(
-    `INSERT INTO admissions 
-     (first_name, last_name, class_applied, dob, parent_first_name, parent_last_name, address, city, state, phone, email, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  );
-
-  stmt.run(
-    first_name,
-    last_name,
-    class_applied,
-    dob,
-    parent_first_name,
-    parent_last_name,
-    address || null,
-    city || null,
-    state || null,
-    phone,
-    email,
-    created_at,
-    function (err) {
-      if (err) {
-        console.error("DB insert error:", err);
-        return res.status(500).json({ ok: false, error: "Database error" });
-      }
-      return res.json({ ok: true, id: this.lastID });
-    },
-  );
+  try {
+    const created_at = new Date().toISOString();
+    const id = await getNextId(Admission);
+    const admission = new Admission({
+      id,
+      first_name,
+      last_name,
+      class_applied,
+      dob,
+      parent_first_name,
+      parent_last_name,
+      address,
+      city,
+      state,
+      phone,
+      email,
+      created_at,
+    });
+    await admission.save();
+    return res.json({ ok: true, id });
+  } catch (err) {
+    console.error("DB insert error:", err);
+    return res.status(500).json({ ok: false, error: "Database error" });
+  }
 });
 
 // Simple admin listing endpoint (optional)
-app.get("/api/admissions", (req, res) => {
-  db.all(
-    "SELECT * FROM admissions ORDER BY created_at DESC",
-    [],
-    (err, rows) => {
-      if (err) {
-        return res.status(500).json({ ok: false, error: "Database error" });
-      }
-      res.json({ ok: true, data: rows });
-    },
-  );
+app.get("/api/admissions", async (req, res) => {
+  try {
+    const rows = await Admission.find().sort({ created_at: -1 });
+    res.json({ ok: true, data: rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: "Database error" });
+  }
 });
 
 // ===== Admin Auth and Dashboard (NEW) =====
@@ -520,27 +668,19 @@ app.post(
 
 // Dashboard (protected)
 app.get("/admin/dashboard", requireAdmin, async (req, res) => {
-  const all = (sql, p = []) =>
-    new Promise((resolve, reject) =>
-      db.all(sql, p, (err, rows) => (err ? reject(err) : resolve(rows))),
-    );
-  const get = (sql, p = []) =>
-    new Promise((resolve, reject) =>
-      db.get(sql, p, (err, row) => (err ? reject(err) : resolve(row))),
-    );
-
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
-    const [rows, totalRow, todayRow, classRows] = await Promise.all([
-      all("SELECT * FROM admissions ORDER BY created_at DESC"),
-      get("SELECT COUNT(*) AS total FROM admissions"),
-      get("SELECT COUNT(*) AS today FROM admissions WHERE created_at LIKE ?", [
-        `${todayStr}%`,
-      ]),
-      all(
-        "SELECT class_applied AS class, COUNT(*) AS count FROM admissions GROUP BY class_applied ORDER BY class_applied",
-      ),
-    ]);
+    const rows = await Admission.find().sort({ created_at: -1 });
+    const total = await Admission.countDocuments();
+    const today = await Admission.countDocuments({
+      created_at: { $regex: `^${todayStr}` },
+    });
+    const classRows = await Admission.aggregate([
+      { $group: { _id: "$class_applied", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]).then((results) =>
+      results.map((r) => ({ class: r._id, count: r.count })),
+    );
 
     const tableRows = rows
       .map((r) => {
@@ -606,14 +746,14 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
         <div class="stat-card red">
           <div>
             <div class="stat-title">Total Admissions</div>
-            <div class="stat-value">${(totalRow && totalRow.total) || 0}</div>
+            <div class="stat-value">${total || 0}</div>
           </div>
           <div class="stat-icon">📚</div>
         </div>
         <div class="stat-card yellow">
           <div>
             <div class="stat-title">Today’s Admissions</div>
-            <div class="stat-value">${(todayRow && todayRow.today) || 0}</div>
+            <div class="stat-value">${today || 0}</div>
           </div>
           <div class="stat-icon">🗓️</div>
         </div>
@@ -682,13 +822,16 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
 });
 
 // Protected delete route
-app.post("/admin/delete/:id", requireAdmin, (req, res) => {
+app.post("/admin/delete/:id", requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isFinite(id)) return res.redirect("/admin/dashboard");
-  db.run("DELETE FROM admissions WHERE id = ?", [id], function (err) {
-    if (err) return res.status(500).send("Database error");
+  try {
+    await Admission.deleteOne({ id });
     return res.redirect("/admin/dashboard");
-  });
+  } catch (err) {
+    console.error("Delete admission error:", err);
+    return res.status(500).send("Database error");
+  }
 });
 
 // ===== Teachers (Dynamic) =====
@@ -700,9 +843,9 @@ const esc = (s) =>
     .replace(/"/g, "&quot;");
 
 // GET /teachers - public page, shows admin controls if logged in
-app.get("/teachers", (req, res) => {
-  db.all("SELECT * FROM teachers ORDER BY id DESC", [], (err, rows) => {
-    if (err) return res.status(500).send("Database error");
+app.get("/teachers", async (req, res) => {
+  try {
+    const rows = await Teacher.find().sort({ id: -1 });
     console.log("Session admin value:", req.session && req.session.admin);
     const isAdmin = !!(req.session && req.session.admin === true);
     const uploadErr = (req.query && req.query.upload_error) || "";
@@ -825,6 +968,7 @@ app.get("/teachers", (req, res) => {
         ${cards}
       </div>
     </section>
+    <script>
       document.querySelectorAll('.teacher-del').forEach(f => {
         f.addEventListener('submit', function(e){
           if(!confirm('Delete this teacher?')) e.preventDefault();
@@ -877,7 +1021,10 @@ app.get("/teachers", (req, res) => {
   </body>
   </html>`;
     res.send(html);
-  });
+  } catch (err) {
+    console.error("Teachers route error:", err);
+    return res.status(500).send("Database error");
+  }
 });
 
 // Admin: add teacher
@@ -886,26 +1033,25 @@ app.post(
   requireAdmin,
   upload.single("photo"),
   handleUploadError,
-  (req, res) => {
+  async (req, res) => {
     const { name, qualification, subject } = req.body || {};
     if (!name || !qualification || !subject) return res.redirect("/teachers");
-    const photoPath = req.file ? `/uploads/${req.file.filename}` : null;
-    const stmt = db.prepare(
-      `INSERT INTO teachers (name, qualification, subject, photo) VALUES (?, ?, ?, ?)`,
-    );
-    stmt.run(
-      name || "",
-      qualification || "",
-      subject || "",
-      photoPath || null,
-      (dbErr) => {
-        if (dbErr) {
-          console.error("Teacher insert error:", dbErr);
-          return res.redirect("/teachers?upload_error=DB");
-        }
-        return res.redirect("/teachers");
-      },
-    );
+    try {
+      const photoPath = req.file ? `/uploads/${req.file.filename}` : null;
+      const id = await getNextId(Teacher);
+      const teacher = new Teacher({
+        id,
+        name: name || "",
+        qualification: qualification || "",
+        subject: subject || "",
+        photo: photoPath || null,
+      });
+      await teacher.save();
+      return res.redirect("/teachers");
+    } catch (dbErr) {
+      console.error("Teacher insert error:", dbErr);
+      return res.redirect("/teachers?upload_error=DB");
+    }
   },
 );
 
@@ -915,30 +1061,30 @@ app.post(
   requireAdmin,
   upload.single("photo"),
   handleUploadError,
-  (req, res) => {
+  async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isFinite(id)) return res.redirect("/teachers");
     const { name, qualification, subject } = req.body || {};
     if (!name || !qualification || !subject) return res.redirect("/teachers");
-    const newPhoto = req.file ? `/uploads/${req.file.filename}` : null;
-    db.get("SELECT photo FROM teachers WHERE id = ?", [id], (e, row) => {
-      if (e) {
-        console.error("Teacher select error:", e);
-        return res.redirect("/teachers?upload_error=DB");
-      }
-      const finalPhoto = newPhoto || (row ? row.photo : null);
-      db.run(
-        `UPDATE teachers SET name = ?, qualification = ?, subject = ?, photo = ? WHERE id = ?`,
-        [name || "", qualification || "", subject || "", finalPhoto, id],
-        (err2) => {
-          if (err2) {
-            console.error("Teacher update error:", err2);
-            return res.redirect("/teachers?upload_error=DB");
-          }
-          return res.redirect("/teachers");
+    try {
+      const newPhoto = req.file ? `/uploads/${req.file.filename}` : null;
+      const existingTeacher = await Teacher.findOne({ id });
+      const finalPhoto =
+        newPhoto || (existingTeacher ? existingTeacher.photo : null);
+      await Teacher.updateOne(
+        { id },
+        {
+          name: name || "",
+          qualification: qualification || "",
+          subject: subject || "",
+          photo: finalPhoto,
         },
       );
-    });
+      return res.redirect("/teachers");
+    } catch (err2) {
+      console.error("Teacher update error:", err2);
+      return res.redirect("/teachers?upload_error=DB");
+    }
   },
 );
 
@@ -983,33 +1129,45 @@ app.post(
     body("class").trim().notEmpty(),
     body("roll").trim().notEmpty(),
   ],
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty() || !req.file) {
       return res.redirect(
         `/fees.html?fees_error=${!req.file ? "RECEIPT_REQUIRED" : "INVALID"}`,
       );
     }
-    const student_name = req.body.student_name || "";
-    const address = req.body.address || "";
-    const klass = req.body.class || "";
-    const roll = req.body.roll || "";
-    const receipt = req.file ? `/uploads/${req.file.filename}` : null;
-    const created_at = new Date().toISOString();
-    const stmt = db.prepare(
-      `INSERT INTO payments (student_name, address, class, roll_number, receipt, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    );
-    stmt.run(student_name, address, klass, roll, receipt, created_at, (err) => {
-      if (err) return res.redirect("/fees.html?fees_error=DB");
+    try {
+      const student_name = req.body.student_name || "";
+      const address = req.body.address || "";
+      const klass = req.body.class || "";
+      const roll = req.body.roll || "";
+      const receipt = req.file ? `/uploads/${req.file.filename}` : null;
+      const created_at = new Date().toISOString();
+      const id = await getNextId(Payment);
+      const payment = new Payment({
+        id,
+        student_name,
+        address,
+        class: klass,
+        roll_number: roll,
+        receipt,
+        created_at,
+      });
+      const savedPayment = await payment.save();
+      console.log("Saved payment document:", savedPayment);
       return res.redirect("/fees.html?fees_status=ok");
-    });
+    } catch (err) {
+      console.error("Fee submission error:", err);
+      return res.redirect("/fees.html?fees_error=DB");
+    }
   },
 );
 
 // Admin view payments
-app.get("/fees", requireAdmin, (req, res) => {
-  db.all("SELECT * FROM payments ORDER BY created_at DESC", [], (err, rows) => {
-    if (err) return res.status(500).send("Database error");
+app.get("/fees", requireAdmin, async (req, res) => {
+  try {
+    const rows = await Payment.find().sort({ created_at: -1 });
+    console.log("Number of payments found:", rows.length);
     const items =
       rows && rows.length
         ? rows
@@ -1075,7 +1233,9 @@ app.get("/fees", requireAdmin, (req, res) => {
   </body>
 </html>`;
     res.send(html);
-  });
+  } catch (err) {
+    return res.status(500).send("Database error");
+  }
 });
 
 // Backward-compatible redirect from /fee to /fees for admin
@@ -1083,13 +1243,15 @@ app.get("/fee", requireAdmin, (req, res) => {
   res.redirect("/fees");
 });
 // Admin: delete teacher
-app.post("/admin/teachers/delete/:id", requireAdmin, (req, res) => {
+app.post("/admin/teachers/delete/:id", requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isFinite(id)) return res.redirect("/teachers");
-  db.run("DELETE FROM teachers WHERE id = ?", [id], (err) => {
-    if (err) return res.status(500).send("Database error");
+  try {
+    await Teacher.deleteOne({ id });
     return res.redirect("/teachers");
-  });
+  } catch (err) {
+    return res.status(500).send("Database error");
+  }
 });
 
 // Logout (protected)
@@ -1106,16 +1268,11 @@ app.get("/classes", async (req, res) => {
   const isAdmin = !!(req.session && req.session.admin === true);
   const error = req.query.error || "";
 
-  const all = (sql, p = []) =>
-    new Promise((resolve, reject) =>
-      db.all(sql, p, (err, rows) => (err ? reject(err) : resolve(rows))),
-    );
-
   try {
     const [classes, activities, books] = await Promise.all([
-      all("SELECT * FROM classes ORDER BY id ASC"),
-      all("SELECT * FROM class_activities"),
-      all("SELECT * FROM class_books"),
+      Class.find().sort({ id: 1 }),
+      ClassActivity.find(),
+      ClassBook.find(),
     ]);
 
     const navLinks = classes
@@ -1379,44 +1536,73 @@ app.get("/classes", async (req, res) => {
 });
 
 // Admin: Class CRUD
-app.post("/admin/classes/add", requireAdmin, (req, res) => {
+app.post("/admin/classes/add", requireAdmin, async (req, res) => {
   const { class_name, age_group, session } = req.body;
   if (!class_name) return res.redirect("/classes?error=MissingData");
-  const now = new Date().toISOString();
-  db.run(
-    "INSERT INTO classes (class_name, age_group, session, created_at) VALUES (?, ?, ?, ?)",
-    [class_name, age_group, session, now],
-    (err) => {
-      if (err) return res.redirect("/classes?error=DB");
-      res.redirect("/classes");
-    },
-  );
+  try {
+    const now = new Date().toISOString();
+    const id = await getNextId(Class);
+    const newClass = new Class({
+      id,
+      class_name,
+      age_group,
+      session,
+      created_at: now,
+    });
+    await newClass.save();
+    res.redirect("/classes");
+  } catch (err) {
+    return res.redirect("/classes?error=DB");
+  }
 });
 
-app.post("/admin/classes/delete/:id", requireAdmin, (req, res) => {
-  const id = req.params.id;
-  db.run("DELETE FROM classes WHERE id = ?", [id], (err) => {
+app.post("/admin/classes/delete/:id", requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    await Class.deleteOne({ id });
+    await ClassActivity.deleteMany({ class_id: id });
+    const booksToDelete = await ClassBook.find({ class_id: id });
+    for (const book of booksToDelete) {
+      if (book.image_path) {
+        const fullPath = path.join(STATIC_DIR, book.image_path);
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      }
+    }
+    await ClassBook.deleteMany({ class_id: id });
     res.redirect("/classes");
-  });
+  } catch (err) {
+    res.redirect("/classes");
+  }
 });
 
 // Admin: Activity CRUD
-app.post("/admin/classes/activity/add/:cid", requireAdmin, (req, res) => {
+app.post("/admin/classes/activity/add/:cid", requireAdmin, async (req, res) => {
   const { activity_name } = req.body;
-  const cid = req.params.cid;
+  const cid = parseInt(req.params.cid, 10);
   if (!activity_name) return res.redirect("/classes");
-  db.run(
-    "INSERT INTO class_activities (class_id, activity_name) VALUES (?, ?)",
-    [cid, activity_name],
-    (err) => res.redirect("/classes"),
-  );
+  try {
+    const id = await getNextId(ClassActivity);
+    const activity = new ClassActivity({ id, class_id: cid, activity_name });
+    await activity.save();
+    res.redirect("/classes");
+  } catch (err) {
+    res.redirect("/classes");
+  }
 });
 
-app.post("/admin/classes/activity/delete/:id", requireAdmin, (req, res) => {
-  db.run("DELETE FROM class_activities WHERE id = ?", [req.params.id], (err) =>
-    res.redirect("/classes"),
-  );
-});
+app.post(
+  "/admin/classes/activity/delete/:id",
+  requireAdmin,
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    try {
+      await ClassActivity.deleteOne({ id });
+      res.redirect("/classes");
+    } catch (err) {
+      res.redirect("/classes");
+    }
+  },
+);
 
 // Admin: Book CRUD
 app.post(
@@ -1424,34 +1610,42 @@ app.post(
   requireAdmin,
   uploadBook.single("book_image"),
   handleBookError,
-  (req, res) => {
+  async (req, res) => {
     const { book_name, publisher } = req.body;
-    const cid = req.params.cid;
+    const cid = parseInt(req.params.cid, 10);
     if (!book_name || !req.file)
       return res.redirect("/classes?error=MissingBookData");
-    const image_path = `photos/class-books/${req.file.filename}`;
-    db.run(
-      "INSERT INTO class_books (class_id, book_name, publisher, image_path) VALUES (?, ?, ?, ?)",
-      [cid, book_name, publisher, image_path],
-      (err) => res.redirect("/classes"),
-    );
+    try {
+      const id = await getNextId(ClassBook);
+      const image_path = `photos/class-books/${req.file.filename}`;
+      const book = new ClassBook({
+        id,
+        class_id: cid,
+        book_name,
+        publisher,
+        image_path,
+      });
+      await book.save();
+      res.redirect("/classes");
+    } catch (err) {
+      res.redirect("/classes");
+    }
   },
 );
 
-app.post("/admin/classes/book/delete/:id", requireAdmin, (req, res) => {
-  db.get(
-    "SELECT image_path FROM class_books WHERE id = ?",
-    [req.params.id],
-    (err, row) => {
-      if (row && row.image_path) {
-        const fullPath = path.join(STATIC_DIR, row.image_path);
-        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-      }
-      db.run("DELETE FROM class_books WHERE id = ?", [req.params.id], (err) =>
-        res.redirect("/classes"),
-      );
-    },
-  );
+app.post("/admin/classes/book/delete/:id", requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const book = await ClassBook.findOne({ id });
+    if (book && book.image_path) {
+      const fullPath = path.join(STATIC_DIR, book.image_path);
+      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+    }
+    await ClassBook.deleteOne({ id });
+    res.redirect("/classes");
+  } catch (err) {
+    res.redirect("/classes");
+  }
 });
 
 app.listen(PORT, () => {
