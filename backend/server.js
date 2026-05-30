@@ -9,7 +9,30 @@ const bcrypt = require("bcrypt");
 const rateLimit = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
 const mongoose = require("mongoose");
+const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Upload to Cloudinary function
+const uploadToCloudinary = (file, folder = "beschool") => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: folder },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      },
+    );
+    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+  });
+};
 
 console.log("Mongo URI loaded:", !!process.env.MONGODB_URI);
 
@@ -395,16 +418,7 @@ db.serialize(() => {
   });
 });
 
-// ===== Multer config for teacher profile photos =====
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname || "") || "";
-    cb(null, "teacher-" + unique + ext);
-  },
-});
-
+// ===== Multer config for memory storage =====
 const fileFilter = (req, file, cb) => {
   if (
     file &&
@@ -420,23 +434,13 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
 });
 
-// Multer for class book images
-const bookStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, CLASS_BOOKS_DIR),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname || "") || "";
-    cb(null, "book-" + unique + ext);
-  },
-});
-
 const uploadBook = multer({
-  storage: bookStorage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
 });
@@ -1037,7 +1041,10 @@ app.post(
     const { name, qualification, subject } = req.body || {};
     if (!name || !qualification || !subject) return res.redirect("/teachers");
     try {
-      const photoPath = req.file ? `/uploads/${req.file.filename}` : null;
+      let photoPath = null;
+      if (req.file) {
+        photoPath = await uploadToCloudinary(req.file, "beschool/teachers");
+      }
       const id = await getNextId(Teacher);
       const teacher = new Teacher({
         id,
@@ -1067,7 +1074,10 @@ app.post(
     const { name, qualification, subject } = req.body || {};
     if (!name || !qualification || !subject) return res.redirect("/teachers");
     try {
-      const newPhoto = req.file ? `/uploads/${req.file.filename}` : null;
+      let newPhoto = null;
+      if (req.file) {
+        newPhoto = await uploadToCloudinary(req.file, "beschool/teachers");
+      }
       const existingTeacher = await Teacher.findOne({ id });
       const finalPhoto =
         newPhoto || (existingTeacher ? existingTeacher.photo : null);
@@ -1141,7 +1151,7 @@ app.post(
       const address = req.body.address || "";
       const klass = req.body.class || "";
       const roll = req.body.roll || "";
-      const receipt = req.file ? `/uploads/${req.file.filename}` : null;
+      const receipt = await uploadToCloudinary(req.file, "beschool/receipts");
       const created_at = new Date().toISOString();
       const id = await getNextId(Payment);
       const payment = new Payment({
@@ -1310,7 +1320,7 @@ app.get("/classes", async (req, res) => {
           .map(
             (b) => `
           <div class="book-card">
-            <img src="/${b.image_path}" alt="${esc(b.book_name)}">
+            <img src="${b.image_path.startsWith("http") ? b.image_path : "/" + b.image_path}" alt="${esc(b.book_name)}">
             <div class="book-info">
               <h4>${esc(b.book_name)}</h4>
               <p>Publisher: ${esc(b.publisher)}</p>
@@ -1617,7 +1627,7 @@ app.post(
       return res.redirect("/classes?error=MissingBookData");
     try {
       const id = await getNextId(ClassBook);
-      const image_path = `photos/class-books/${req.file.filename}`;
+      const image_path = await uploadToCloudinary(req.file, "beschool/books");
       const book = new ClassBook({
         id,
         class_id: cid,
@@ -1628,7 +1638,8 @@ app.post(
       await book.save();
       res.redirect("/classes");
     } catch (err) {
-      res.redirect("/classes");
+      console.error("Book upload error:", err);
+      res.redirect("/classes?error=UploadFailed");
     }
   },
 );
